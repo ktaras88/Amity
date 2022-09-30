@@ -11,7 +11,6 @@
 |Django|4.1.1|
 |Django Rest Framework|3.14.0|
 |PostgreSQL|2.9.3|
-|Python Decouple |3.6|
 
 > Available Environments:
 <br> - <b>Qa</b>
@@ -28,6 +27,12 @@ Or paste these variables into `.env` file inside the project (without **export**
 export ENVIRONMENT = local    # environments keys (qa, production, development)
 
 export SECRET_KEY=some_key
+
+export DB_NAME = 'amity'
+export DB_USER_NAME = your_user_name
+export DB_PASSWORD = your_password
+export DB_HOST = '127.0.0.1'
+
 ```
 
 Restart your terminal for changes to take effect.
