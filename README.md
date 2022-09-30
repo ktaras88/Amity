@@ -25,8 +25,7 @@ Add some exports to your shell profile `~/.zshrc` or `~/.bashrc`<br>
 Or paste these variables into `.env` file inside the project (without **export**)
 
 ```sh
-export ENVIRONMENT = local    # environments keys (qa, staging, production, test, development)
-export DJANGO_APP=amity_api
+export ENVIRONMENT = local    # environments keys (qa, production, development)
 
 export SECRET_KEY=some_key
 ```
