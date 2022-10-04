@@ -12,6 +12,8 @@ python-decouple = "==3.6"
 pytz = "==2022.2.1"
 sqlparse = "==0.4.3"
 tzdata = "==2022.4"
+drf-yasg = "*"
+sentry-sdk = "*"
 
 [dev-packages]
 
