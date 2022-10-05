@@ -73,8 +73,15 @@ python manage.py runserver
 Ctrl+C
 ```
 
-4. Run migrations or database schema ./manage.py migrate
-5. Run unit tests ./manage.py test
+4. Run migrations or database schema 
+```sh
+./manage.py migrate
+```
+6. Run unit tests 
+
+```sh
+./manage.py test
+```
 
 ## Managing environment variables
 
