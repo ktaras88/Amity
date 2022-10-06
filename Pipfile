@@ -14,6 +14,8 @@ sqlparse = "==0.4.3"
 tzdata = "==2022.4"
 drf-yasg = "*"
 sentry-sdk = "*"
+django-localflavor = "*"
+pillow = "*"
 
 [dev-packages]
 
