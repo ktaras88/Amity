@@ -19,7 +19,7 @@ class User(AbstractBaseUser):
     email = models.EmailField('email address', unique=True, db_index=True)
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
-    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to='/')
+    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to='media/')
     avatar_coord = models.JSONField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
