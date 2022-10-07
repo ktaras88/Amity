@@ -25,6 +25,8 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(default=False)
     objects = UserManager()
 
+    USERNAME_FIELD = 'email'
+
 
 class Profile(models.Model):
     AMITY_ADMINISTRATOR = 1
