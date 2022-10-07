@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'users',
     'drf_yasg',
     'rest_framework_simplejwt',
+    'localflavor',
 ]
 
 MIDDLEWARE = [
