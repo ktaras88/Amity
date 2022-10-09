@@ -21,6 +21,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
+from users.views import MyTokenObtainPairView
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Amity API",
@@ -36,7 +38,7 @@ schema_view = get_schema_view(
 )
 
 v1_0_patterns = [
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/', include('users.urls')),
 ]
