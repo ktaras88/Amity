@@ -23,6 +23,7 @@ class User(AbstractBaseUser):
     avatar_coord = models.JSONField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    security_code = models.CharField(max_length=6, default=None, null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
