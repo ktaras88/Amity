@@ -35,4 +35,4 @@ class Profile(models.Model):
     role = models.SmallIntegerField(choices=ProfileRoles.CHOICES)
 
     class Meta:
-        unique_together = ['user_id', 'profile_id']
+        unique_together = ['user', 'role']
