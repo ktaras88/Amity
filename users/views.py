@@ -2,8 +2,8 @@ from rest_framework import generics, status
 # from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .methods import send_security_code
 from .models import User
+from .security_code import send_security_code
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer
 
 
