@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -28,6 +28,12 @@ class User(AbstractBaseUser):
 
     def create_profile(self, role):
         Profile.objects.create(user_id=self.id, role=role)
+
+    def has_perm(self, perm, obj=None):
+        return self.is_staff
+
+    def has_module_perms(self, app_label):
+        return self.is_staff
 
 
 class Profile(models.Model):

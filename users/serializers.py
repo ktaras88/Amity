@@ -1,22 +1,22 @@
 from django.contrib.auth.models import update_last_login
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 
 from .models import Profile
 
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
     profile_id = serializers.IntegerField(default=None)
 
     def validate(self, attrs):
-        data = super(TokenObtainPairSerializer, self).validate(attrs)
+        data = super(SimpleJWTTokenObtainPairSerializer, self).validate(attrs)
 
         if attrs['profile_id']:
             profile = Profile.objects.filter(id=attrs['profile_id'], user_id=self.user.id).first()
             if not profile:
-                raise ValidationError('Test')
+                raise ValidationError('There is no profile')
         else:
             profile = self.user.profile_set.first()
 

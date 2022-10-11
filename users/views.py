@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from .serializers import MyTokenObtainPairSerializer
+from .serializers import TokenObtainPairSerializer
 
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
+class TokenObtainPairView(SimpleJWTTokenObtainPairView):
+    serializer_class = TokenObtainPairSerializer
