@@ -1,9 +1,13 @@
-from django.contrib.auth.models import (
-    AbstractBaseUser
-)
+import random
+from string import digits
+from django.contrib.auth.models import AbstractBaseUser
+from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.db import models
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
+from amity_api.settings import EMAIL_HOST_USER
 from .managers import UserManager
 
 
@@ -27,6 +31,25 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+    def generate_security_code(self, length=6):
+        return ''.join(random.choice(digits) for _ in range(length))
+
+    def send_security_code(self):
+        self.security_code = self.generate_security_code()
+        self.save()
+
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'security_code': self.security_code
+        }
+
+        subject = 'Amity security code'
+        html = render_to_string('email_security_code.html', context=context)
+        message = strip_tags(html)
+
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
 
 
 class Profile(models.Model):
