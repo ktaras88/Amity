@@ -1,9 +1,8 @@
-from django.contrib.auth.models import (
-    AbstractBaseUser
-)
+from django.contrib.auth.models import AbstractBaseUser
 from django.core.validators import RegexValidator
 from django.db import models
 
+from .choices_types import ProfileRoles
 from .managers import UserManager
 
 
@@ -27,21 +26,19 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
 
+    def create_profile(self, role):
+        Profile.objects.create(user_id=self.id, role=role)
+
+    def has_perm(self, perm, obj=None):
+        return self.is_staff
+
+    def has_module_perms(self, app_label):
+        return self.is_staff
+
 
 class Profile(models.Model):
-    AMITY_ADMINISTRATOR = 1
-    SUPERVISOR = 2
-    COORDINATOR = 3
-    OBSERVER = 4
-    RESIDENT = 5
-
-    ROLE_CHOICES = (
-        (AMITY_ADMINISTRATOR, 'amity_administrator'),
-        (SUPERVISOR, 'supervisor'),
-        (COORDINATOR, 'coordinator'),
-        (OBSERVER, 'observer'),
-        (RESIDENT, 'resident'),
-    )
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    role = models.SmallIntegerField(choices=ROLE_CHOICES)
+    role = models.SmallIntegerField(choices=ProfileRoles.CHOICES)
+
+    class Meta:
+        unique_together = ['user', 'role']
