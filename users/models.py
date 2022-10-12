@@ -7,6 +7,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from amity_api.settings import EMAIL_HOST_USER
 from .choices_types import ProfileRoles
@@ -61,7 +62,21 @@ class User(AbstractBaseUser):
         message = strip_tags(html)
 
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
-        
+
+    def send_invitation_link(self):
+        token = RefreshToken.for_user(self)
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'token': str(token.access_token)
+        }
+
+        subject = 'Invitation to Amity password creation'
+        html = render_to_string('invitation_to_amity_system.html', context=context)
+        message = strip_tags(html)
+
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
 
 class Profile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

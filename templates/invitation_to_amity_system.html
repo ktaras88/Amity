@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Amity security code</title>
+    <title>Invitation to Amity password creation</title>
 </head>
 <body>
     <h2>Hello{% if first_name %}{{ first_name }}{% endif %}{% if last_name %}{{ last_name }}{% endif %}!</h2>
-    <p>This is <strong><a href="{% url 'security-code' %}">invitation</a></strong> to the Amity system.</p>
-    <p>Your security code is <strong>{{ security_code }}</strong></p>
+    <p>This is <strong><a href="{% url 'create-new-password' %}?token={{ token }}" target="_blank">invitation</a></strong> to the Amity system.</p>
     <p>Thanks for using Amity.</p>
 </body>
 </html>

@@ -1,11 +1,15 @@
-from django.shortcuts import render
-
+import jwt
+from decouple import config
 from rest_framework import generics, status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from .models import User
-from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer
+from .permissions import IsAccessToken
+from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
+    CreateNewPasswordSerializer
 
 
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
@@ -14,13 +18,13 @@ class TokenObtainPairView(SimpleJWTTokenObtainPairView):
 
 class ResetPasswordRequestEmail(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-        if User.objects.filter(email=email).exists():
-            user = User.objects.get(email=email)
+        if user := User.objects.filter(email=email).first():
             user.send_security_code()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
@@ -29,21 +33,31 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
 
 class ResetPasswordSecurityCode(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
+    permission_classes = (AllowAny, )
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if user := User.objects.filter(email=serializer.validated_data['email']).first():
+            if serializer.validated_data['security_code'] == user.security_code:
+                token = RefreshToken.for_user(user)
+                return Response({'token': str(token.access_token)}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateNewPassword(generics.GenericAPIView):
+    serializer_class = CreateNewPasswordSerializer
+    permission_classes = (IsAccessToken, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if serializer.validated_data['security_code'] is not None and \
-                serializer.validated_data['security_code'] == request.data.user.security_code:
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-
-class ResetPasswordNewSecurityCode(generics.GenericAPIView):
-
-    def post(self, request):
-        user = request.data.user
-        user.send_security_code()
+        token = request.GET.get('token')
+        user_id = jwt.decode(token, config('SECRET_KEY'), algorithms=["HS256"])['user_id']
+        user = User.objects.get(id=user_id)
+        user.set_password(serializer.validated_data['password'])
+        user.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
