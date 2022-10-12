@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from amity_api.settings import EMAIL_HOST_USER
+from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
 from .choices_types import ProfileRoles
 from .managers import UserManager
 
@@ -68,7 +68,7 @@ class User(AbstractBaseUser):
         context = {
             'first_name': self.first_name,
             'second_name': self.last_name,
-            'token': str(token.access_token)
+            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token.access_token)
         }
 
         subject = 'Invitation to Amity password creation'

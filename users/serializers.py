@@ -1,3 +1,5 @@
+import jwt
+from decouple import config
 from django.contrib.auth.models import update_last_login
 
 from rest_framework import serializers
@@ -5,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 
-from .models import Profile
+from .models import Profile, User
 
 
 class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
@@ -56,7 +58,8 @@ class SecurityCodeSerializer(serializers.Serializer):
 
 
 class CreateNewPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(min_length=2, write_only=True, required=True, validators='')
+    token = serializers.CharField()
+    password = serializers.CharField(min_length=2, write_only=True, required=True)
     confirm_password = serializers.CharField(min_length=2, write_only=True, required=True)
 
     class Meta:
@@ -65,4 +68,9 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
+        user_id = jwt.decode(attr['token'], config('SECRET_KEY'), algorithms=["HS256"])['user_id']
+        if user := User.objects.filter(id=user_id).first():
+            attr['user'] = user
+        else:
+            raise serializers.ValidationError("There is no account with that email.")
         return attr

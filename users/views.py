@@ -28,7 +28,7 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
             user.send_security_code()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'There is no account with that name.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'There is no account with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResetPasswordSecurityCode(generics.GenericAPIView):
@@ -49,15 +49,11 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
 
 class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
-    permission_classes = (IsAccessToken, )
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        token = request.GET.get('token')
-        user_id = jwt.decode(token, config('SECRET_KEY'), algorithms=["HS256"])['user_id']
-        user = User.objects.get(id=user_id)
+        user = serializer.validated_data('user')
         user.set_password(serializer.validated_data['password'])
-        user.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
