@@ -35,8 +35,15 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         if serializer.validated_data['security_code'] is not None and \
-                serializer.validated_data['security_code'] == self.user.security_code:
+                serializer.validated_data['security_code'] == request.data.user.security_code:
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResetPasswordNewSecurityCode(generics.GenericAPIView):
+
+    def post(self, request):
+        user = request.data.user
+        user.send_security_code()
