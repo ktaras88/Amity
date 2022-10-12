@@ -1,7 +1,14 @@
+import random
+from string import digits
+
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.db import models
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
+from amity_api.settings import EMAIL_HOST_USER
 from .choices_types import ProfileRoles
 from .managers import UserManager
 
@@ -22,6 +29,7 @@ class User(AbstractBaseUser):
     avatar_coord = models.JSONField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    security_code = models.CharField(max_length=6, default=None, null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -35,6 +43,25 @@ class User(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return self.is_staff
 
+    def generate_security_code(self, length=6):
+        return ''.join(random.choice(digits) for _ in range(length))
+
+    def send_security_code(self):
+        self.security_code = self.generate_security_code()
+        self.save()
+
+        context = {
+            'first_name': self.first_name,
+            'second_name': self.last_name,
+            'security_code': self.security_code
+        }
+
+        subject = 'Amity security code'
+        html = render_to_string('email_security_code.html', context=context)
+        message = strip_tags(html)
+
+        send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+        
 
 class Profile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -42,3 +69,4 @@ class Profile(models.Model):
 
     class Meta:
         unique_together = ['user', 'role']
+        

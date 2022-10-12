@@ -1,4 +1,5 @@
 from django.contrib.auth.models import update_last_login
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
@@ -37,3 +38,17 @@ class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
         token['role'] = kwargs['profile'].role
 
         return token
+
+
+class RequestEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(min_length=2)
+
+    class Meta:
+        fields = ["email"]
+
+
+class SecurityCodeSerializer(serializers.Serializer):
+    security_code = serializers.CharField(min_length=6, max_length=6)
+
+    class Meta:
+        fields = ["security_code"]
