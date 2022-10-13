@@ -1,11 +1,10 @@
-import jwt
-from decouple import config
 from django.contrib.auth.models import update_last_login
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import Profile, User
 
@@ -68,7 +67,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
-        user_id = jwt.decode(attr['token'], config('SECRET_KEY'), algorithms=["HS256"])['user_id']
+        user_id = AccessToken(attr['token'])['user_id']
         if user := User.objects.filter(id=user_id).first():
             attr['user'] = user
         else:
