@@ -23,7 +23,7 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email=None, password=None, role=ProfileRoles.RESIDENT, **extra_fields):
         extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
+        # extra_fields.setdefault('is_superuser', False)
         return self._create_user(email, password, role, True, **extra_fields)
 
     def create_superuser(self, email, password, role=ProfileRoles.AMITY_ADMINISTRATOR, **extra_fields):
