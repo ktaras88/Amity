@@ -53,4 +53,5 @@ class CreateNewPassword(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data('user')
         user.set_password(serializer.validated_data['password'])
+        user.save()
         return Response(status=status.HTTP_200_OK)
