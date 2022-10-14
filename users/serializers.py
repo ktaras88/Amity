@@ -1,4 +1,7 @@
 from django.contrib.auth import authenticate
+from django.core import exceptions
+import django.contrib.auth.password_validation as validators
+
 from django.contrib.auth.models import update_last_login
 
 from rest_framework import serializers, status
@@ -97,4 +100,11 @@ class CreateNewPasswordSerializer(serializers.Serializer):
             attr['user'] = user
         else:
             raise serializers.ValidationError("There is no account with that email.")
+
+        # validators.validate_password(password=attr['password'])
+        try:
+            validators.validate_password(password=attr['password'])
+        except exceptions.ValidationError as e:
+            raise serializers.ValidationError({'password': list(e.messages)})
+
         return attr

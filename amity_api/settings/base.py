@@ -83,13 +83,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
+        'OPTIONS': {'min_length': 8, }},
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {'NAME': 'amity_api.users.validators.MaximumLengthValidator', },
+    {'NAME': 'amity_api.users.validators.NumberValidator',
+     'OPTIONS': {'min_digits': 1, }},
+    {'NAME': 'amity_api.users.validators.UppercaseValidator', },
+    {'NAME': 'amity_api.users.validators.LowercaseValidator', },
+    {'NAME': 'amity_api.users.validators.SymbolValidator', },
 ]
 
 
