@@ -36,7 +36,7 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         if user := User.objects.filter(email=serializer.validated_data['email']).first():
             if serializer.validated_data['security_code'] == user.security_code:
-                token = InvitationToken.objects.create(user=user)
+                token, _ = InvitationToken.objects.get_or_create(user=user)
                 return Response({'token': str(token)}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
