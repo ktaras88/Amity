@@ -1,17 +1,21 @@
 import random
 from string import digits
-
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from rest_framework.authtoken.models import Token
 
 from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
 from .choices_types import ProfileRoles
 from .managers import UserManager
+
+
+class InvitationToken(Token):
+    type = models.CharField(max_length=20, default="invitation")
 
 
 class User(AbstractBaseUser):
@@ -64,11 +68,12 @@ class User(AbstractBaseUser):
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
 
     def send_invitation_link(self):
-        token = RefreshToken.for_user(self)
+        token = InvitationToken.objects.create(user=self)
+
         context = {
             'first_name': self.first_name,
             'second_name': self.last_name,
-            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token.access_token)
+            'link_url': FRONT_END_NEW_PASSWORD_URL + '?token=' + str(token)
         }
 
         subject = 'Invitation to Amity password creation'

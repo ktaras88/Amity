@@ -1,10 +1,9 @@
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from .models import User
+from .models import InvitationToken, User
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer
 
@@ -37,8 +36,8 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         if user := User.objects.filter(email=serializer.validated_data['email']).first():
             if serializer.validated_data['security_code'] == user.security_code:
-                token = RefreshToken.for_user(user)
-                return Response({'token': str(token.access_token)}, status=status.HTTP_200_OK)
+                token = InvitationToken.objects.create(user=user)
+                return Response({'token': str(token)}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -51,7 +50,8 @@ class CreateNewPassword(generics.GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data('user')
+        user = serializer.validated_data['user']
         user.set_password(serializer.validated_data['password'])
+
         user.save()
         return Response(status=status.HTTP_200_OK)

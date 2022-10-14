@@ -4,9 +4,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Profile, User
+from .models import InvitationToken, Profile, User
 
 
 class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
@@ -67,7 +66,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
-        user_id = AccessToken(attr['token'])['user_id']
+        user_id = InvitationToken.objects.get(key=str(attr['token'])).user_id
         if user := User.objects.filter(id=user_id).first():
             attr['user'] = user
         else:
