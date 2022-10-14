@@ -1,7 +1,8 @@
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError, AuthenticationFailed as DRFAuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import AccessToken
@@ -9,11 +10,35 @@ from rest_framework_simplejwt.tokens import AccessToken
 from .models import Profile, User
 
 
+class AuthenticationFailed(DRFAuthenticationFailed):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
 class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
     profile_id = serializers.IntegerField(default=None)
 
+    def _pre_validate(self, attrs):
+        authenticate_kwargs = {
+            self.username_field: attrs[self.username_field],
+            "password": attrs["password"],
+        }
+        try:
+            authenticate_kwargs["request"] = self.context["request"]
+        except KeyError:
+            pass
+
+        self.user = authenticate(**authenticate_kwargs)
+
+        if not api_settings.USER_AUTHENTICATION_RULE(self.user):
+            raise AuthenticationFailed(
+                self.error_messages["no_active_account"],
+                "no_active_account",
+            )
+
+        return {}
+
     def validate(self, attrs):
-        data = super(SimpleJWTTokenObtainPairSerializer, self).validate(attrs)
+        data = self._pre_validate(attrs)
 
         if attrs['profile_id']:
             profile = Profile.objects.filter(id=attrs['profile_id'], user_id=self.user.id).first()
