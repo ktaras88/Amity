@@ -66,9 +66,8 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
-        user_id = InvitationToken.objects.get(key=str(attr['token'])).user_id
-        if user := User.objects.filter(id=user_id).first():
-            attr['user'] = user
-        else:
-            raise serializers.ValidationError("There is no account with that email.")
+        try:
+            attr['user'] = InvitationToken.objects.filter(key=str(attr['token'])).first()
+        except:
+            raise serializers.ValidationError("There is no access to this page.")
         return attr

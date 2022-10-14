@@ -41,6 +41,8 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
             else:
                 return Response({'error': 'Incorrect security code. Check your secure code or request for a new one.'},
                                 status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'There is no user with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateNewPassword(generics.GenericAPIView):
@@ -52,6 +54,8 @@ class CreateNewPassword(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         user.set_password(serializer.validated_data['password'])
-
         user.save()
+
+        InvitationToken.objects.filter(user_id=user.id).delete()
+
         return Response(status=status.HTTP_200_OK)
