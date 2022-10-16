@@ -81,7 +81,7 @@ class SecurityCodeSerializer(serializers.Serializer):
 
 
 class CreateNewPasswordSerializer(serializers.Serializer):
-    token = serializers.CharField()
+    token = serializers.CharField(required=True)
     password = serializers.CharField(min_length=2, write_only=True, required=True)
     confirm_password = serializers.CharField(min_length=2, write_only=True, required=True)
 
