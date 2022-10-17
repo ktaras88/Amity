@@ -157,8 +157,7 @@ jobs:
   #         command: |
   #           mongocli atlas backup snapshots create Production --desc "Snapshot before deploy $(date)" --retention 10
 
-
-# AWS RDS
+  # AWS RDS
   run_database_backup:
       machine:
         image: python:3.10-slim
