@@ -8,9 +8,8 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError, AuthenticationFailed as DRFAuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Profile, User
+from .models import InvitationToken, Profile, User
 
 
 class AuthenticationFailed(DRFAuthenticationFailed):
@@ -95,9 +94,8 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
-        user_id = AccessToken(attr['token'])['user_id']
-        if user := User.objects.filter(id=user_id).first():
-            attr['user'] = user
+        if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
+            attr['user'] = token.user
         else:
             raise serializers.ValidationError("There is no account with that email.")
 
