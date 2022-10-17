@@ -8,8 +8,68 @@ orbs:
 # PROD_TARGET_GROUP, STAGING_TARGET_GROUP, QA_TARGET_GROUP
 # PROJECT_NAME
 
-jobs:
 
+workflows:
+  version: 2
+  ci_cd:
+    jobs:
+      - build_docker_images:
+        filters:
+            branches:
+              ignore:
+                - production
+                - staging
+                - qa
+
+      - run_unit_tests:
+          requires:
+            - build_docker_images
+          filters:
+            branches:
+              ignore:
+                - production
+                - staging
+                - qa
+          
+      - run_unit_tests:
+          name: run_unit_tests_main
+          environment: "${CIRCLE_BRANCH}"
+          requires:
+            - build_docker_images
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
+      
+      - check_main_branch:
+          requires:
+            - run_unit_tests
+            - run_unit_tests_main
+
+      - run_database_backup:
+          requires:
+            - check_main_branch
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
+
+      - deploy_the_aplication:
+          #requires:
+          #  - run_database_migrations
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production     
+
+
+jobs:
   build_docker_images:
     docker:
       - image: python:3.10-slim
@@ -218,62 +278,3 @@ jobs:
             else
               echo "This step is only for qa, staging, production branches"
             fi          
-
-workflows:
-  version: 2
-  ci_cd:
-    jobs:
-      - build_docker_images:
-        filters:
-            branches:
-              ignore:
-                - production
-                - staging
-                - qa
-
-      - run_unit_tests:
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              ignore:
-                - production
-                - staging
-                - qa
-          
-      - run_unit_tests:
-          name: run_unit_tests_main
-          environment: "${CIRCLE_BRANCH}"
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
-      
-      - check_main_branch:
-          requires:
-            - run_unit_tests
-            - run_unit_tests_main
-
-      - run_database_backup:
-          requires:
-            - check_main_branch
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
-
-      - deploy_the_aplication:
-          #requires:
-          #  - run_database_migrations
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production            
