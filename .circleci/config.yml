@@ -224,14 +224,14 @@ workflows:
   version: 2
   ci_cd:
     jobs:
-      - build_docker_images
-      filters:
+      - build_docker_images:
+        filters:
             branches:
               ignore:
                 - production
                 - staging
                 - qa
-                
+
       - run_unit_tests:
           requires:
             - build_docker_images
