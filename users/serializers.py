@@ -96,3 +96,9 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError("There is no access to this page.")
         return attr
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar', 'avatar_coord']
