@@ -25,7 +25,6 @@ SECRET_KEY = config('SECRET_KEY', default='')
 # SECURITY WARNING: don't run with debug turned on in production!
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -73,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'amity_api.wsgi.application'
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -90,14 +88,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-    {'NAME': 'amity_api.users.validators.MaximumLengthValidator', },
-    {'NAME': 'amity_api.users.validators.NumberValidator',
-     'OPTIONS': {'min_digits': 1, }},
-    {'NAME': 'amity_api.users.validators.UppercaseValidator', },
-    {'NAME': 'amity_api.users.validators.LowercaseValidator', },
-    {'NAME': 'amity_api.users.validators.SymbolValidator', },
+    {
+        'NAME': 'users.validators.MaximumLengthValidator',
+    },
+    {
+        'NAME': 'users.validators.NumberValidator',
+        'OPTIONS': {'min_digits': 1, }
+    },
+    {
+        'NAME': 'users.validators.UppercaseValidator',
+    },
+    {
+        'NAME': 'users.validators.LowercaseValidator',
+    },
+    {
+        'NAME': 'users.validators.SymbolValidator',
+    },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -109,7 +116,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
