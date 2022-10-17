@@ -1,0 +1,36 @@
+version: '3.3'
+services:
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:2.9.3-alpine
+    restart: always
+    ports:
+    - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: <db_name>
+    networks:
+      - backend
+
+  backend:
+    container_name: backend
+    depends_on:
+      - postgresql
+    image: IMAGE_NAME
+    environment:
+      RAILS_ENV: test
+      APP_DB_HOST: postgresql
+      #SONAR_HOST: $SONAR_HOST
+      #SONAR_LOGIN: $SONAR_LOGIN
+      CIRCLE_BRANCH: $CIRCLE_BRANCH
+    command: <start application server command>
+    ports:
+      - '<application port>:<application port>'
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
