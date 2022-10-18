@@ -95,7 +95,6 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
-      - set-aws-credentials
       - run:
           name: Run database Migrations
           command: |
