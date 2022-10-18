@@ -12,15 +12,10 @@ orbs:
 workflows:
   version: 2
 
-      jobs:
-      
+    jobs:
+    
       - build_docker_images:
-          filters:
-            branches:
-              ignore:
-                - production
-                - staging
-                - qa
+        name: build_docker_images
 
       - run_unit_tests:
           requires:
@@ -60,14 +55,14 @@ workflows:
                 - production
 
       - deploy_the_aplication:
-          #requires:
-          #  - run_database_migrations
+          requires:
+            - run_database_migrations
           filters:
             branches:
               only:
                 - qa
                 - staging
-                - production     
+                - production 
 
 
 jobs:
