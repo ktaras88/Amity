@@ -9,7 +9,7 @@
     #rm -rf /var/lib/apt/lists/*
 
 #FROM aws_ecr_id/base-${project_name}/${circle_sha1}
-#aws ecr get-login --region us-west-2
+aws ecr get-login --region us-west-2
 FROM 3300893877638.dkr.ecr.us-west-2.amazonaws.com/base-amity-t2:v1.0
 WORKDIR /amity-backend-t2
 
