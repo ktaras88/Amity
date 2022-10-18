@@ -89,7 +89,7 @@ jobs:
 
 
   # AWS RDS
-  run_database-migrations:
+  run_database_migrations:
     machine:
       image: ubuntu-2004:202111-02
     steps:
@@ -168,7 +168,7 @@ workflows:
           requires:
             - build_docker_images
 
-      - run_database-migrations:
+      - run_database_migrations:
           requires:
             - check_main_branch
           filters:
