@@ -43,7 +43,7 @@ workflows:
             - run_unit_tests
             - run_unit_tests_main
 
-      - run_database_backup:
+    - run_database_backup:
           requires:
             - check_main_branch
           filters:
@@ -53,7 +53,7 @@ workflows:
                 - staging
                 - production
 
-      - deploy_the_aplication:
+    - deploy_the_aplication:
           requires:
             - run_database_migrations
           filters:
