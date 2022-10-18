@@ -17,7 +17,7 @@ jobs:
       - checkout
       - setup_remote_docker
       - aws-cli/install
-      - set-aws-credentials
+      - aws ecr get-login-password --region us-west-2
       - run:
           name: Substitute nginx variables
           command: |
