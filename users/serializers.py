@@ -1,4 +1,7 @@
 from django.contrib.auth import authenticate
+from django.core import exceptions
+import django.contrib.auth.password_validation as validators
+
 from django.contrib.auth.models import update_last_login
 
 from rest_framework import serializers, status
@@ -94,5 +97,10 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
         else:
-            raise serializers.ValidationError({'error': "Invalid token."})
+            raise serializers.ValidationError("There is no account with that email.")
+
+        try:
+            validators.validate_password(password=attr['password'])
+        except exceptions.ValidationError as e:
+            raise serializers.ValidationError({'password': list(e.messages)})
         return attr
