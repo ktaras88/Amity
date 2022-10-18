@@ -105,6 +105,7 @@ jobs:
           region: AWS_DEFAULT_REGION
           tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
       - build-and-push-image:
+          name: amity-t2
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
