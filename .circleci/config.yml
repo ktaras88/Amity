@@ -17,7 +17,7 @@ jobs:
       - checkout
       - setup_remote_docker
       - aws-cli/install
-      - aws ecr get-login-password --region us-west-2
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
       - run:
           name: Substitute nginx variables
           command: |
