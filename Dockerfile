@@ -8,7 +8,7 @@
     #apt-get install -y  \
     #rm -rf /var/lib/apt/lists/*
 
-FROM AWS_ACCOUNT_ID.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com/python:3.10-slim.v1.0
+FROM ${AWS_ECR_ID}/base-${PROJECT_NAME}/${CIRCLE_SHA1}
 
 WORKDIR /amity-backend-t2
 
