@@ -1,9 +1,10 @@
 from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
+from amity_api.permission import IsOwnerOrReadOnlyNotForResident
 from .models import InvitationToken, User
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer
@@ -62,14 +63,18 @@ class CreateNewPassword(generics.GenericAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class UserAvatar(RetrieveUpdateDestroyAPIView):
+class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnlyNotForResident, )
 
     def delete(self, request, *args, **kwargs):
-        pk = kwargs.get('pk', None)
-        if user := User.objects.filter(id=pk).first():
-            user.avatar.delete()
-            return Response({'message': 'Avatar removed'}, status=status.HTTP_200_OK)
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.avatar:
+            if request.user.avatar_coord:
+                request.user.avatar.delete()
+                request.user.avatar_coord.delete()
+                return Response({'message': 'Avatar removed'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'There is no avatar_coord.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'There is no avatar.'}, status=status.HTTP_400_BAD_REQUEST)
