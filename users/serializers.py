@@ -97,7 +97,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
         else:
-            raise serializers.ValidationError("There is no account with that email.")
+            raise serializers.ValidationError({'error': "Invalid token."})
 
         try:
             validators.validate_password(password=attr['password'])
