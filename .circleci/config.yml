@@ -38,7 +38,7 @@ jobs:
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
-          dockerfile: deployment/Dockerfile
+          dockerfile: Dockerfile-base
           path: .
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
@@ -47,8 +47,8 @@ jobs:
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
-          dockerfile: Dockerfile-nginx
-          path: deployment/nginx
+          dockerfile: Dockerfile
+          path: .
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
           tag: "nginx-<<pipeline.number>>-${CIRCLE_SHA1}"
