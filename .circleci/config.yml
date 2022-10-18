@@ -70,9 +70,10 @@ workflows:
 
 
 jobs:
+
   build_docker_images:
     docker:
-      - image: python:3.10-slim
+      - image: python:3.10
     steps:
       - checkout
       - setup_remote_docker
@@ -120,7 +121,7 @@ jobs:
         default: "temporary_storage"
         type: string
     machine:
-          image: python:3.10-slim
+          image: python:3.10
     steps:
       - checkout
       - aws-cli/install
@@ -183,7 +184,7 @@ jobs:
 
   check_main_branch:
     machine:
-      image: python:3.10-slim
+      image: python:3.10
     steps:
       - aws-cli/install
       - run:
@@ -220,7 +221,7 @@ jobs:
   # AWS RDS
   run_database_backup:
       machine:
-        image: python:3.10-slim
+        image: python:3.10
       steps:
         - aws-cli/install
         - run:
@@ -250,7 +251,7 @@ jobs:
 
   deploy_the_aplication:
     docker:
-      - image: python:3.10-slim
+      - image: python:3.10
     steps:
       - checkout
       - aws-cli/install
