@@ -8,7 +8,7 @@
     #apt-get install -y  \
     #rm -rf /var/lib/apt/lists/*
 
-FROM AWS_ECR_ID/base-${PROJECT_NAME}/${CIRCLE_SHA1}
+FROM aws_ecr_id/base-${project_name}/${circle_sha1}
 
 WORKDIR /amity-backend-t2
 
