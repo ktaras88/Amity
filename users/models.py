@@ -32,12 +32,15 @@ class User(AbstractBaseUser):
         if filesize > megabyte_limit * 1024 * 1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
 
+    def file_name(instance, filename):
+        return 'media/avatars/' + str(instance.id) + '_' + str(instance.email)
+
     first_name = models.CharField('first name', max_length=100, null=True, blank=True)
     last_name = models.CharField('last name', max_length=100, null=True, blank=True)
     email = models.EmailField('email address', unique=True, db_index=True)
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
-    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to='media/', validators=[
+    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to=file_name, validators=[
         FileExtensionValidator(VALID_EXTENSIONS), validate_size])
     avatar_coord = models.JSONField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
