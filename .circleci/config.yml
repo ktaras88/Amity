@@ -12,11 +12,11 @@ orbs:
 workflows:
   version: 2
 
-    jobs:
-      - build_docker_images:
+  jobs:
+    - build_docker_images:
         name: build_docker_images
 
-      - run_unit_tests:
+    - run_unit_tests:
           requires:
             - build_docker_images
           filters:
@@ -26,7 +26,7 @@ workflows:
                 - staging
                 - qa
           
-      - run_unit_tests:
+    - run_unit_tests:
           name: run_unit_tests_main
           environment: "${CIRCLE_BRANCH}"
           requires:
@@ -38,7 +38,7 @@ workflows:
                 - staging
                 - production
       
-      - check_main_branch:
+    - check_main_branch:
           requires:
             - run_unit_tests
             - run_unit_tests_main
