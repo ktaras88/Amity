@@ -264,7 +264,7 @@ workflows:
 
       - deploy_the_aplication:
           requires:
-            - run_database_migrations
+            #- run_database_migrations
           filters:
             branches:
               only:
