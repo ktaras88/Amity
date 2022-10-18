@@ -27,15 +27,11 @@ class MaximumLengthValidator:
 
 
 class NumberValidator:
-    def __init__(self, min_digits=0):
-        self.min_digits = min_digits
-
     def validate(self, password, user=None):
-        if not len(re.findall('\d', password)) >= self.min_digits:
+        if not re.findall('\d', password):
             raise ValidationError(
-                "The password must contain at least %(min_digits)d digit(s), 0-9.",
+                "The password must contain at least 1 digit, 0-9.",
                 code='password_no_number',
-                params={'min_digits': self.min_digits},
             )
 
 
@@ -61,7 +57,7 @@ class SymbolValidator:
     def validate(self, password, user=None):
         if not re.findall('[()[\]{}|\\`~!@#$%^&*_\-+=;:\'",<>./?]', password):
             raise ValidationError(
-                "The password must contain at least 1 symbol: " +
+                "The password must contain at least 1 special character: " +
                 "()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?",
                 code='password_no_symbol',
             )

@@ -93,7 +93,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'users.validators.NumberValidator',
-        'OPTIONS': {'min_digits': 1, }
     },
     {
         'NAME': 'users.validators.UppercaseValidator',

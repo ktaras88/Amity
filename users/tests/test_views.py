@@ -6,7 +6,7 @@ from users.validators import (MaximumLengthValidator, NumberValidator, Uppercase
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
-from ..models import User, InvitationToken
+from users.models import User, InvitationToken
 
 
 class TokenObtainPairViewTestCase(APITestCase):
@@ -69,7 +69,7 @@ class CreateNewPasswordTestCase(APITestCase):
         self.assertEqual(cm.exception.messages, [expected_error_min % 8])
 
         # Maximum length validation
-        expected_error_max = "This password must contain at most %(max_length)d characters."
+        expected_error_max = "This password must contain at most %d characters."
         self.assertIsNone(MaximumLengthValidator().validate('tjdi32ndki12'))
         self.assertIsNone(MaximumLengthValidator(max_length=128).validate('tjdi32ndki12'))
 
@@ -102,23 +102,19 @@ class CreateNewPasswordTestCase(APITestCase):
         self.assertEqual(ex.exception.error_list[0].code, 'password_no_lower')
 
         # Symbol validation
-        expected_error_sym = "The password must contain at least 1 symbol: ()[]{}|`~!@#$%^&*_-+=;:'\",<>./?"
-        self.assertIsNone(UppercaseValidator().validate('84cuc$*elJdr'))
+        expected_error_sym = "The password must contain at least 1 special character: ()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?"
+        self.assertIsNone(SymbolValidator().validate('84cuc$*elJdr'))
 
         with self.assertRaises(ValidationError) as ex:
-            UppercaseValidator().validate('12345678')
+            SymbolValidator().validate('123456Po78')
         self.assertEqual(ex.exception.messages, [expected_error_sym])
         self.assertEqual(ex.exception.error_list[0].code, 'password_no_symbol')
 
         # Number validation
-        expected_error_num = "The password must contain at least %(min_digits)d digit(s), 0-9."
+        expected_error_num = "The password must contain at least 1 digit, 0-9."
         self.assertIsNone(NumberValidator().validate('84cuc$*elJdr'))
 
         with self.assertRaises(ValidationError) as ex:
-            NumberValidator().validate('advmkdJmd$')
+            NumberValidator().validate('shdhfnrdm&R')
         self.assertEqual(ex.exception.messages, [expected_error_num])
         self.assertEqual(ex.exception.error_list[0].code, 'password_no_number')
-
-        with self.assertRaises(ValidationError) as cm:
-            NumberValidator(min_digits=5).validate('12g34ndjcnI')
-        self.assertEqual(cm.exception.messages, [expected_error_num % 4])
