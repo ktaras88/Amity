@@ -89,22 +89,22 @@ jobs:
 
 
   # AWS RDS
-    run_database-migrations:
-      machine:
-        image: ubuntu-2004:202111-02
-      steps:
-        - checkout
-        - aws-cli/install
-        - set-aws-credentials
-        - run:
-            name: Run database Migrations
-            command: |
-                set -e
-                cd deployment/migrations
-                export TAG='backend-<<pipeline.number>>-${CIRCLE_SHA1}'
-                sed -i "s@TAG@$TAG@" migrations.sh
-                chmod +x migrations.sh
-                bash migrations.sh
+  run_database-migrations:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - aws-cli/install
+      - set-aws-credentials
+      - run:
+          name: Run database Migrations
+          command: |
+              set -e
+              cd deployment/migrations
+              export TAG='backend-<<pipeline.number>>-${CIRCLE_SHA1}'
+              sed -i "s@TAG@$TAG@" migrations.sh
+              chmod +x migrations.sh
+              bash migrations.sh
 
   deploy_the_aplication:
     docker:
