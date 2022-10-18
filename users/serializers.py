@@ -99,7 +99,6 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError("There is no account with that email.")
 
-        # validators.validate_password(password=attr['password'])
         try:
             validators.validate_password(password=attr['password'])
         except exceptions.ValidationError as e:

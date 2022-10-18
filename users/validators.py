@@ -1,5 +1,4 @@
 import re
-
 from django.core.exceptions import ValidationError
 
 """
@@ -20,10 +19,8 @@ class MaximumLengthValidator:
     def validate(self, password, user=None):
         if len(password) > self.max_length:
             raise ValidationError(
-                "This password must contain at most %(max_length)d characters.",
-                code='password_too_long',
-                params={'max_length': self.max_length},
-            )
+                "This password must contain at most %d characters." % 128,
+                code='password_too_long',)
 
 
 class NumberValidator:
@@ -31,8 +28,7 @@ class NumberValidator:
         if not re.findall('\d', password):
             raise ValidationError(
                 "The password must contain at least 1 digit, 0-9.",
-                code='password_no_number',
-            )
+                code='password_no_number',)
 
 
 class UppercaseValidator:
@@ -40,8 +36,7 @@ class UppercaseValidator:
         if not re.findall('[A-Z]', password):
             raise ValidationError(
                 "The password must contain at least 1 uppercase letter, A-Z.",
-                code='password_no_upper',
-            )
+                code='password_no_upper',)
 
 
 class LowercaseValidator:
@@ -49,8 +44,7 @@ class LowercaseValidator:
         if not re.findall('[a-z]', password):
             raise ValidationError(
                 "The password must contain at least 1 lowercase letter, a-z.",
-                code='password_no_lower',
-            )
+                code='password_no_lower',)
 
 
 class SymbolValidator:
@@ -59,5 +53,4 @@ class SymbolValidator:
             raise ValidationError(
                 "The password must contain at least 1 special character: " +
                 "()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?",
-                code='password_no_symbol',
-            )
+                code='password_no_symbol',)

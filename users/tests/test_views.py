@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib.auth.password_validation import (MinimumLengthValidator)
@@ -6,7 +7,8 @@ from users.validators import (MaximumLengthValidator, NumberValidator, Uppercase
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
-from users.models import User, InvitationToken
+from users.models import InvitationToken
+User = get_user_model()
 
 
 class TokenObtainPairViewTestCase(APITestCase):
@@ -54,67 +56,78 @@ class CreateNewPasswordTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_ensure_password_is_valid(self):
-        # Minimum length validation
-        expected_error_min = "This password is too short. It must contain at least %d characters."
-        self.assertIsNone(MinimumLengthValidator().validate('12345678'))
-        self.assertIsNone(MinimumLengthValidator(min_length=8).validate('12345678'))
+        data = {'token': self.token, 'password': '12Jsirvm&*knv4', 'confirm_password': '12Jsirvm&*knv4'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        with self.assertRaises(ValidationError) as ex:
-            MinimumLengthValidator().validate('1234567')
-        self.assertEqual(ex.exception.messages, [expected_error_min % 8])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_too_short')
+    def test_ensure_minimum_length_is_valid(self):
+        data = {'token': self.token, 'password': '12Jsir*4', 'confirm_password': '12Jsir*4'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        with self.assertRaises(ValidationError) as cm:
-            MinimumLengthValidator(min_length=8).validate('12345')
-        self.assertEqual(cm.exception.messages, [expected_error_min % 8])
+    def test_ensure_minimum_length_is_invalid(self):
+        data = {'token': self.token, 'password': '12Jsir*', 'confirm_password': '12Jsir*'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "This password is too short. It must contain at least %d characters." % 8)
 
-        # Maximum length validation
-        expected_error_max = "This password must contain at most %d characters."
-        self.assertIsNone(MaximumLengthValidator().validate('tjdi32ndki12'))
-        self.assertIsNone(MaximumLengthValidator(max_length=128).validate('tjdi32ndki12'))
+    def test_ensure_maximum_length_is_valid(self):
+        data = {'token': self.token, 'password': '12Jsir*4er', 'confirm_password': '12Jsir*4er'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # validate password with 129 symbols
-        with self.assertRaises(ValidationError) as ex:
-            MaximumLengthValidator().validate('rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6')
-        self.assertEqual(ex.exception.messages, [expected_error_max % 128])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_too_long')
+    def test_ensure_maximum_length_is_invalid(self):
+        data = {'token': self.token, 'password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6',
+                'confirm_password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "This password must contain at most %d characters." % 128)
 
-        with self.assertRaises(ValidationError) as cm:
-            MaximumLengthValidator(max_length=128).validate('rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6')
-        self.assertEqual(cm.exception.messages, [expected_error_max % 128])
+    def test_ensure_password_include_uppercase_letters(self):
+        data = {'token': self.token, 'password': 'hdiDfrnJ32)', 'confirm_password': 'hdiDfrnJ32)'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Uppercase validation
-        expected_error_up = "The password must contain at least 1 uppercase letter, A-Z."
-        self.assertIsNone(UppercaseValidator().validate('573Jhducni'))
+    def test_ensure_password_include_no_uppercase_letters(self):
+        data = {'token': self.token, 'password': 'disnt&ie)1',
+                'confirm_password': 'disnt&ie)1'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "The password must contain at least 1 uppercase letter, A-Z.")
 
-        with self.assertRaises(ValidationError) as ex:
-            UppercaseValidator().validate('12345678')
-        self.assertEqual(ex.exception.messages, [expected_error_up])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_no_upper')
+    def test_ensure_password_include_lowercase_letters(self):
+        data = {'token': self.token, 'password': '2yxnfiHi*exy^s', 'confirm_password': '2yxnfiHi*exy^s'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Lowercase validation
-        expected_error_lo = "The password must contain at least 1 lowercase letter, a-z."
-        self.assertIsNone(LowercaseValidator().validate('84cucelJdr'))
+    def test_ensure_password_include_no_lowercase_letters(self):
+        data = {'token': self.token, 'password': '174HDOR9SH&%JD',
+                'confirm_password': '174HDOR9SH&%JD'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "The password must contain at least 1 lowercase letter, a-z.")
 
-        with self.assertRaises(ValidationError) as ex:
-            LowercaseValidator().validate('12345678')
-        self.assertEqual(ex.exception.messages, [expected_error_lo])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_no_lower')
+    def test_ensure_password_include_symbols(self):
+        data = {'token': self.token, 'password': '64Jnd*&o3RB', 'confirm_password': '64Jnd*&o3RB'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Symbol validation
-        expected_error_sym = "The password must contain at least 1 special character: ()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?"
-        self.assertIsNone(SymbolValidator().validate('84cuc$*elJdr'))
+    def test_ensure_password_include_no_symbols(self):
+        data = {'token': self.token, 'password': 'irnxyYNDR5375',
+                'confirm_password': 'irnxyYNDR5375'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "The password must contain at least 1 special character: " +
+                "()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?")
 
-        with self.assertRaises(ValidationError) as ex:
-            SymbolValidator().validate('123456Po78')
-        self.assertEqual(ex.exception.messages, [expected_error_sym])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_no_symbol')
+    def test_ensure_password_includes_digits(self):
+        data = {'token': self.token, 'password': 'jfbyHSG&^sje443', 'confirm_password': 'jfbyHSG&^sje443'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Number validation
-        expected_error_num = "The password must contain at least 1 digit, 0-9."
-        self.assertIsNone(NumberValidator().validate('84cuc$*elJdr'))
+    def test_ensure_password_include_no_digits(self):
+        data = {'token': self.token, 'password': 'Yjduc&%jeu', 'confirm_password': 'Yjduc&%jeu'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], "The password must contain at least 1 digit, 0-9.")
 
-        with self.assertRaises(ValidationError) as ex:
-            NumberValidator().validate('shdhfnrdm&R')
-        self.assertEqual(ex.exception.messages, [expected_error_num])
-        self.assertEqual(ex.exception.error_list[0].code, 'password_no_number')
