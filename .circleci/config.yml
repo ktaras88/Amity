@@ -12,7 +12,8 @@ orbs:
 workflows:
   version: 2
 
-    jobs:
+  jobs:
+
       - build_docker_images:
           filters:
             branches:
