@@ -81,7 +81,7 @@ class SecurityCodeSerializer(serializers.Serializer):
 
 
 class CreateNewPasswordSerializer(serializers.Serializer):
-    token = serializers.CharField()
+    token = serializers.CharField(required=True)
     password = serializers.CharField(min_length=2, write_only=True, required=True)
     confirm_password = serializers.CharField(min_length=2, write_only=True, required=True)
 
@@ -90,9 +90,9 @@ class CreateNewPasswordSerializer(serializers.Serializer):
 
     def validate(self, attr):
         if attr['password'] != attr['confirm_password']:
-            raise serializers.ValidationError("Passwords do not match")
+            raise serializers.ValidationError({'error': "Passwords do not match."})
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
         else:
-            raise serializers.ValidationError("There is no access to this page.")
+            raise serializers.ValidationError({'error': "Invalid token."})
         return attr

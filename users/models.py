@@ -49,7 +49,7 @@ class User(AbstractBaseUser):
         return self.is_staff
 
     def generate_security_code(self, length=6):
-        return ''.join(random.choice(digits) for _ in range(length))
+        return ''.join(random.sample(digits, length))
 
     def send_security_code(self):
         self.security_code = self.generate_security_code()
