@@ -31,13 +31,3 @@ class TestUserModel(APITestCase):
         user = User.objects.create_user(email='user@user.user')
         user.security_code = user.generate_security_code()
         self.assertTrue(user.security_code)
-
-    def test_send_email(self):
-        mail.send_mail(
-            'Subject',
-            'Message',
-            EMAIL_HOST_USER,
-            ['to@example.com'],
-            fail_silently=False
-        )
-        self.assertEqual(len(mail.outbox), 1)

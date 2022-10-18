@@ -1,11 +1,10 @@
+from django.core import mail
 from django.urls import reverse
 
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase, APIClient
 
 from ..models import User, InvitationToken
-from ..serializers import CreateNewPasswordSerializer
 
 
 class TokenObtainPairViewTestCase(APITestCase):
@@ -45,7 +44,7 @@ class ResetPasswordRequestEmailTestCase(APITestCase):
         data = {'email': 'no@no.no'}
         response = self.client.post(self.url,  data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        self.assertTrue(response.data['error'], 'There is no account with that email.')
 
     def test_forgot_password_email_in_the_system_check_response(self):
         data = {'email': self.user.email}
@@ -57,7 +56,7 @@ class ResetPasswordRequestEmailTestCase(APITestCase):
         data = {}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['email'][0]), 'This field is required.')
+        self.assertEqual(response.data['email'][0], 'This field is required.')
 
 
 class NewSecurityCodeTestCase(APITestCase):
@@ -78,26 +77,27 @@ class ResetPasswordSecurityCodeTestCase(APITestCase):
         data = {'email': 'no@no.no', 'security_code': '000000'}
         response = self.client.post(self.url,  data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        self.assertEqual(response.data['error'], 'There is no user with that email.')
 
     def test_security_code_wrong_code(self):
         data = {'email': self.user.email, 'security_code': '000000'}
         response = self.client.post(self.url,  data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        self.assertEqual(response.data['error'], 'Incorrect security code. Check your secure code or request for a new one.')
 
     def test_security_code_generate_token(self):
         data = {'email': self.user.email, 'security_code': self.user.security_code}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('token' in response.data)
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_security_code_empty_data(self):
         data = {}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['email'][0]), 'This field is required.')
-
+        self.assertEqual(response.data['email'][0], 'This field is required.')
+        self.assertEqual(response.data['security_code'][0], 'This field is required.')
 
 class CreateNewPasswordTestCase(APITestCase):
     def setUp(self):
@@ -110,17 +110,13 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {'token': 'wrong-token', 'password': 'User-password123', 'confirm_password': 'User-password123'}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        with self.assertRaisesMessage(ValidationError, "There is no access to this page."):
-            serializer = CreateNewPasswordSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
+        self.assertEqual(response.data['token'][0], 'Invalid token.')
 
     def test_create_new_password_compare_passwords_not_the_same(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password321'}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        with self.assertRaisesMessage(ValidationError, "Passwords do not match"):
-            serializer = CreateNewPasswordSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
+        self.assertEqual(response.data['error'][0], 'Passwords do not match.')
 
     def test_create_new_password_correct(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
@@ -132,10 +128,13 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['token'][0]), 'This field is required.')
+        self.assertEqual(response.data['token'][0], 'This field is required.')
+        self.assertEqual(response.data['password'][0], 'This field is required.')
+        self.assertEqual(response.data['confirm_password'][0], 'This field is required.')
 
     def test_create_new_password_after_successful_request_token_was_removed_from_the_system(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
+        self.assertTrue(InvitationToken.objects.filter(user=self.user).count())
         response = self.client.post(self.url, data, format='json')
         self.assertFalse(InvitationToken.objects.filter(user=self.user).count())
         self.assertFalse(self.user.password == data['password'])
