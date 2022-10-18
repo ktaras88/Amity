@@ -19,7 +19,7 @@ class MaximumLengthValidator:
     def validate(self, password, user=None):
         if len(password) > self.max_length:
             raise ValidationError(
-                "This password must contain at most %d characters." % 128,
+                f"This password must contain at most {self.max_length} characters.",
                 code='password_too_long',)
 
 
