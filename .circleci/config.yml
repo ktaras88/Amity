@@ -17,35 +17,19 @@ jobs:
       - checkout
       - setup_remote_docker
       - aws-cli/install
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
       - run:
-          name: Substitute nginx variables
-          command: |
-            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-              export CF_URL=AWS_CF_${CIRCLE_BRANCH^^}
-              sed -i "s@CF_URL@${!CF_URL}@" deployment/nginx/default.conf
-            else
-              echo "This step is only for qa, staging, production branches"
-            fi
+          name: Login into aws ecr
+          command: aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
       - run:
           name: Set ENV
           command: |
             if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
               echo "export ENV=$CIRCLE_BRANCH" >> $BASH_ENV
             else
-              echo "export ENV=temporary_storage" >> $BASH_ENV
+              echo "export ENV=temporary-storage" >> $BASH_ENV
             fi
+
       - aws-ecr/build-and-push-image:
-          checkout: false
-          attach-workspace: true
-          account-url: AWS_ECR_ID
-          dockerfile: Dockerfile-base
-          path: .
-          repo: "base-${PROJECT_NAME}"
-          region: AWS_DEFAULT_REGION
-          tag: "v1.0"
-      - aws-ecr/build-and-push-image:
-          #aws ecr get-login-password --region us-west-2
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
@@ -53,75 +37,41 @@ jobs:
           path: .
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
-          tag: "v1.0"
+          tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
 
 
-  run_unit_tests:
-    parameters:
-      environment:
-        default: "temporary_storage"
-        type: string
-    machine:
-          image: ubuntu-2004:202111-02
-    steps:
-      - checkout
-      - aws-cli/install
-      - run:
-          name: Pull variables
-          command: |
-            apt update && apt install -y jq
-            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-              aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
-              jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
-            else
-              aws secretsmanager get-secret-value --secret-id "qa/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
-              jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
-            fi
-      - run:
-          name: Run unit tests
-          command: |
-            set -ex
-            export IMAGE_NAME='${AWS_ECR_ID}/<<parameters.environment>>-gbd-talent:backend-<<pipeline.number>>-${CIRCLE_SHA1}'
-            sed -i "s@IMAGE_NAME@${IMAGE_NAME}@" deploy/unit-tests/docker-compose.yml
-            cd deploy/unit-tests/
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
-            docker-compose up -d
-            docker exec -it backend bash -c 'set -ex && coverage run --source='.' -m pytest --junitxml=test-count.xml && coverage xml'
-      #- run :
-      #    name: Installing SonarQube dependencies
-      #    command: |
-      #      docker exec -u 0 backend bash -c 'apt update'
-      #      docker exec -u 0 backend bash -c 'apt-get install -y default-jdk less wget unzip'
-      #- run :
-      #    name: Add circleci IP to SonarQube server
-      #    command:
-      #      aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID_TECH_OFFICE_SONARQUBE" --profile sonarqube && aws configure set aws_secret_access_key "$AWS_ACCESS_KEY_SECRET_TECH_OFFICE_SONARQUBE" --profile sonarqube && aws configure set region "$AWS_REGION_TECH_OFFICE_SONARQUBE" --profile sonarqube && aws configure set output "json" --profile sonarqube ;
-      #      export public_ip_address=$(docker exec -u 0 backend bash -c 'wget -qO- http://checkip.amazonaws.com');
-      #      aws ec2 authorize-security-group-ingress --region "${AWS_REGION_TECH_OFFICE_SONARQUBE}" --group-id "${CIRCLECI_SG_ID}" --protocol tcp --port 443 --cidr "$public_ip_address"/32 --profile sonarqube
-      #- run :
-      #    name: Install Sonar Scaner
-      #    command: |
-      #      docker exec -u 0 backend bash -c 'wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472.zip'
-      #      docker exec -u 0 backend bash -c 'unzip sonar-scanner-cli-4.6.2.2472.zip'
-      #- run :
-      #    name: Run Sonar Scaner
-      #    command: |
-      #      docker exec -u 0 backend bash -c 'export SONAR_SCANNER_OPTS="-Xmx2048m"'
-      #      docker exec -u 0 backend bash -c 'eval /gbdt/sonar-scanner-4.6.2.2472/bin/sonar-scanner \
-      #      -Dsonar.projectKey=$PROJECT_NAME-backend \
-      #      -Dsonar.sources=/$PROJECT_NAME/ \
-      #      -Dsonar.host.url=$SONAR_HOST  \
-      #      -Dsonar.login=$SONAR_LOGIN \
-      #      -Dsonar.projectVersion=${CIRCLE_BRANCH:0:90} \
-      #      -Dsonar.python.coverage.reportPaths=/$PROJECT_NAME/coverage.xml \
-      #      -Dsonar.python.xunit.reportPath=/$PROJECT_NAME/test-count.xml'
-      #- run :
-      #    name: Delete circleci IP from SonaQube server
-      #    when: always
-      #    command:
-      #      export public_ip_address=$(docker exec -u 0 backend bash -c 'wget -qO- http://checkip.amazonaws.com');
-      #      aws ec2 revoke-security-group-ingress --region "${AWS_REGION_TECH_OFFICE_SONARQUBE}" --group-id "${CIRCLECI_SG_ID}" --protocol tcp --port 443 --cidr "$public_ip_address"/32 --profile sonarqube
-
+  # #run_unit_tests:
+  #   parameters:
+  #     environment:
+  #       default: "temporary-storage"
+  #       type: string
+  #   machine:
+  #         image: ubuntu-2004:202111-02
+  #   steps:
+  #     - checkout
+  #     - aws-cli/install
+  #     - run:
+  #         name: Pull variables
+  #         command: |
+  #           apt update && apt install -y jq
+  #           if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+  #             aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
+  #           else
+  #             aws secretsmanager get-secret-value --secret-id "qa/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
+  #           fi
+  #     - run:
+  #         name: Run unit tests
+  #         command: |
+  #           set -ex
+  #           export IMAGE_NAME='${AWS_ECR_ID}/<<parameters.environment>>-gbd-talent:backend-<<pipeline.number>>-${CIRCLE_SHA1}'
+  #           sed -i "s@IMAGE_NAME@${IMAGE_NAME}@" deploy/unit-tests/docker-compose.yml
+  #           cd deploy/unit-tests/
+  #           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
+  #           docker-compose up -d
+  #           docker exec -it backend bash -c 'set -ex && coverage run --source='.' -m pytest --junitxml=test-count.xml && coverage xml'
+      
 
   check_main_branch:
     machine:
@@ -132,63 +82,29 @@ jobs:
           name: Deleting docker images from AWS ECR
           command: |
             if !([ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]); then
-              aws ecr batch-delete-image --repository-name "temporary_storage-${PROJECT_NAME}" --image-ids imageTag=backend-<<pipeline.number>>-${CIRCLE_SHA1} imageTag=nginx-<<pipeline.number>>-${CIRCLE_SHA1} --region $AWS_DEFAULT_REGION
+              aws ecr batch-delete-image --repository-name "temporary-storage-${PROJECT_NAME}" --image-ids imageTag=backend-<<pipeline.number>>-${CIRCLE_SHA1} --region $AWS_DEFAULT_REGION
             else
               echo "This is main branch, it will be safed on AWS ECR"
             fi
 
 
-  # MONGODB
-  # run_database_backup:
-  #   machine:
-  #     image: ubuntu-2004:202111-02
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           sudo apt-get install -y gnupg wget
-  #           wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
-  #           echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
-  #           sudo apt-get update
-  #           sudo apt-get install -y mongocli moreutils gettext-base
-  #           envsubst < deployment/mongocli.toml  | sponge deployment/mongocli.toml
-  #           echo "export XDG_CONFIG_HOME=/home/circleci/project/deploy" >> $BASH_ENV
-  #     - run:
-  #         name: Backup MongoDB
-  #         command: |
-  #           mongocli atlas backup snapshots create Production --desc "Snapshot before deploy $(date)" --retention 10
-  
   # AWS RDS
-  run_database_backup:
+    run_database-migrations:
       machine:
         image: ubuntu-2004:202111-02
       steps:
+        - checkout
         - aws-cli/install
+        - set-aws-credentials
         - run:
-            name: Delete old database snapshots
+            name: Run database Migrations
             command: |
-              if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-                export snapshots_list=$(aws rds describe-db-snapshots --snapshot-type 'manual' --db-instance-identifier "${CIRCLE_BRANCH}-${PROJECT_NAME}" --region "${AWS_DEFAULT_REGION}" | jq '.DBSnapshots[]' | jq -r '.DBSnapshotIdentifier' | awk /\d/ | head -n -9)
-                export snapshot
-                for snapshot in ${snapshots_list}; do
-                  aws rds delete-db-snapshot --db-snapshot-identifier "${snapshot}" --region "${AWS_DEFAULT_REGION}"
-                echo "Deleting snapshot ${snapshot}"
-                done
-              else
-                echo 'This step is only for qa, staging, production branches';
-              fi
-        - run:
-            name: Create new database snaphot
-            command: | 
-              if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-                export snapshot_name="${CIRCLE_BRANCH}-${PROJECT_NAME}-deploy-<<pipeline.number>>-${CIRCLE_SHA1}"
-                aws rds create-db-snapshot --db-instance-identifier "${CIRCLE_BRANCH}-${PROJECT_NAME}" --db-snapshot-identifier "${snapshot_name}" --tags "Key=Source,Value=Deployment" --region "${AWS_DEFAULT_REGION}"
-                echo "Waiting for ${snapshot_name} snapshot creation"
-                aws rds wait db-snapshot-completed --db-snapshot-identifier "${snapshot_name}" --region "${aws_region}  
-              else
-                echo 'This step is only for qa, staging, production branches';
-              fi
+                set -e
+                cd deployment/migrations
+                export TAG='backend-<<pipeline.number>>-${CIRCLE_SHA1}'
+                sed -i "s@TAG@$TAG@" migrations.sh
+                chmod +x migrations.sh
+                bash migrations.sh
 
   deploy_the_aplication:
     docker:
@@ -227,34 +143,33 @@ workflows:
     jobs:
       - build_docker_images
 
-      - run_unit_tests:
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              ignore:
-                - production
-                - staging
-                - qa
+      # - run_unit_tests:
+      #     requires:
+      #       - build_docker_images
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - production
+      #           - staging
+      #           - qa
           
-      - run_unit_tests:
-          name: run_unit_tests_main
-          environment: "${CIRCLE_BRANCH}"
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
+      # - run_unit_tests:
+      #     name: run_unit_tests_main
+      #     environment: "${CIRCLE_BRANCH}"
+      #     requires:
+      #       - build_docker_images
+      #     filters:
+      #       branches:
+      #         only:
+      #           - qa
+      #           - staging
+      #           - production
       
       - check_main_branch:
           requires:
-            - run_unit_tests
-            - run_unit_tests_main
+            - build_docker_images
 
-      - run_database_backup:
+      - run_database-migrations:
           requires:
             - check_main_branch
           filters:
@@ -266,7 +181,7 @@ workflows:
 
       - deploy_the_aplication:
           requires:
-            #- run_database_migrations
+            - run_database_migrations
           filters:
             branches:
               only:
