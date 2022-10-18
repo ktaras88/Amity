@@ -12,7 +12,7 @@ orbs:
 workflows:
   version: 2
 
-  jobs:
+    jobs:
     - build_docker_images:
         name: build_docker_images
 
