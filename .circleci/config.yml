@@ -13,7 +13,6 @@ workflows:
   version: 2
 
     jobs:
-    
       - build_docker_images:
         name: build_docker_images
 
