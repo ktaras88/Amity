@@ -51,7 +51,7 @@ jobs:
           path: .
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
-          tag: "${CIRCLE_SHA1}"
+          tag: "v1.0"
 
 
   run_unit_tests:
