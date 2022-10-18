@@ -1,68 +1,12 @@
 version: 2.1
 orbs:
-  aws-cli: circleci/aws-cli@3.1.3
-  aws-ecr: circleci/aws-ecr@8.1.3
+  aws-cli: circleci/aws-cli@2.0.6
+  aws-ecr: circleci/aws-ecr@7.3.0
 
 # CircleCI needs variables:
 # AWS_DEFAULT_REGION, AWS_ECR_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
 # PROD_TARGET_GROUP, STAGING_TARGET_GROUP, QA_TARGET_GROUP
 # PROJECT_NAME
-
-
-workflows:
-  version: 2
-
-    jobs:
-      - build_docker_images:
-          name: build_docker_images
-
-      - run_unit_tests:
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              ignore:
-                - production
-                - staging
-                - qa
-          
-      - run_unit_tests:
-          name: run_unit_tests_main
-          environment: "${CIRCLE_BRANCH}"
-          requires:
-            - build_docker_images
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
-      
-      - check_main_branch:
-          requires:
-            - run_unit_tests
-            - run_unit_tests_main
-
-      - run_database_backup:
-          requires:
-            - check_main_branch
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
-
-      - deploy_the_aplication:
-          requires:
-            - run_database_migrations
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production 
-
 
 jobs:
 
@@ -90,27 +34,24 @@ jobs:
             else
               echo "export ENV=temporary_storage" >> $BASH_ENV
             fi
-      - build-and-push-image:
-          description: |
+      - aws-ecr/build-and-push-image:
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
-          dockerfile: Dockerfile-base
+          dockerfile: deployment/Dockerfile
           path: .
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
           tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
-      - build-and-push-image:
-          description: Build a Docker image of project
-          #name: amity-t2
+      - aws-ecr/build-and-push-image:
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
-          dockerfile: Dockerfile
-          path: .
+          dockerfile: Dockerfile-nginx
+          path: deployment/nginx
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
-          tag: "backend-<<pipeline.number>>-${CIRCLE_SHA1}"
+          tag: "nginx-<<pipeline.number>>-${CIRCLE_SHA1}"
 
 
   run_unit_tests:
@@ -119,7 +60,7 @@ jobs:
         default: "temporary_storage"
         type: string
     machine:
-          image: cimg/python:3.10
+          image: ubuntu-18
     steps:
       - checkout
       - aws-cli/install
@@ -182,7 +123,7 @@ jobs:
 
   check_main_branch:
     machine:
-      image: cimg/python:3.10
+      image: ubuntu-18
     steps:
       - aws-cli/install
       - run:
@@ -216,10 +157,10 @@ jobs:
   #         command: |
   #           mongocli atlas backup snapshots create Production --desc "Snapshot before deploy $(date)" --retention 10
 
-  # AWS RDS
-  run_database_backup:
+# AWS RDS
+run_database_backup:
       machine:
-        image: cimg/python:3.10
+        image: ubuntu-18
       steps:
         - aws-cli/install
         - run:
@@ -277,3 +218,57 @@ jobs:
             else
               echo "This step is only for qa, staging, production branches"
             fi          
+
+workflows:
+  version: 2
+  ci_cd:
+    jobs:
+      - build_docker_images:
+          description: build_docker_images
+
+      - run_unit_tests:
+          requires:
+            - build_docker_images
+          filters:
+            branches:
+              ignore:
+                - production
+                - staging
+                - qa
+          
+      - run_unit_tests:
+          name: run_unit_tests_main
+          environment: "${CIRCLE_BRANCH}"
+          requires:
+            - build_docker_images
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
+      
+      - check_main_branch:
+          requires:
+            - run_unit_tests
+            - run_unit_tests_main
+
+      - run_database_backup:
+          requires:
+            - check_main_branch
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
+
+      - deploy_the_aplication:
+          requires:
+            - run_database_migrations
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
