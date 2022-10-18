@@ -44,7 +44,7 @@ class ResetPasswordRequestEmailTestCase(APITestCase):
         data = {'email': 'no@no.no'}
         response = self.client.post(self.url,  data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue(response.data['error'], 'There is no account with that email.')
+        self.assertEqual(response.data['error'], 'There is no account with that email.')
 
     def test_forgot_password_email_in_the_system_check_response(self):
         data = {'email': self.user.email}
@@ -110,7 +110,7 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {'token': 'wrong-token', 'password': 'User-password123', 'confirm_password': 'User-password123'}
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['token'][0], 'Invalid token.')
+        self.assertEqual(response.data['error'][0], 'Invalid token.')
 
     def test_create_new_password_compare_passwords_not_the_same(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password321'}
@@ -121,8 +121,8 @@ class CreateNewPasswordTestCase(APITestCase):
     def test_create_new_password_correct(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
         response = self.client.post(self.url, data, format='json')
-        self.assertFalse(self.user.password == data['password'])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(self.user.password == data['password'])
 
     def test_create_new_password_empty_data(self):
         data = {}
@@ -134,8 +134,9 @@ class CreateNewPasswordTestCase(APITestCase):
 
     def test_create_new_password_after_successful_request_token_was_removed_from_the_system(self):
         data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
-        self.assertTrue(InvitationToken.objects.filter(user=self.user).count())
+        self.assertTrue(InvitationToken.objects.filter(user=self.user).exists())
         response = self.client.post(self.url, data, format='json')
-        self.assertFalse(InvitationToken.objects.filter(user=self.user).count())
-        self.assertFalse(self.user.password == data['password'])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(InvitationToken.objects.filter(user=self.user).exists())
+        user = User.objects.get(id=self.user.id)
+        self.assertTrue(user.check_password(data['password']))

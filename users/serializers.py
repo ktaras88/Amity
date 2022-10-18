@@ -94,5 +94,5 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
         else:
-            raise serializers.ValidationError({'token': "Invalid token."})
+            raise serializers.ValidationError({'error': "Invalid token."})
         return attr
