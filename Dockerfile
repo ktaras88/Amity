@@ -8,8 +8,8 @@
     #apt-get install -y  \
     #rm -rf /var/lib/apt/lists/*
 
-FROM aws_ecr_id/base-${project_name}/${circle_sha1}
-
+#FROM aws_ecr_id/base-${project_name}/${circle_sha1}
+FROM 300893877638.dkr.ecr.us-west-2.amazonaws.com/base-amity-t2/${circle_sha1}
 WORKDIR /amity-backend-t2
 
 COPY ./ ./
