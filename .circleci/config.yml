@@ -43,8 +43,8 @@ jobs:
           repo: "base-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
           tag: "v1.0"
-      - aws ecr get-login-password --region us-west-2
       - aws-ecr/build-and-push-image:
+          command: aws ecr get-login-password --region us-west-2
           checkout: false
           attach-workspace: true
           account-url: AWS_ECR_ID
