@@ -104,3 +104,9 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({'password': list(e.messages)})
         return attr
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar', 'avatar_coord']
