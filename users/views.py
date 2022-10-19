@@ -73,7 +73,8 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
         if instance.avatar:
             if instance.avatar_coord:
                 instance.avatar.delete()
-                instance.avatar_coord.delete()
+                instance.avatar_coord = None
+                instance.save()
                 return Response({'message': 'Avatar removed'}, status=status.HTTP_204_NO_CONTENT)
             else:
                 return Response({'error': 'There is no avatar_coord.'}, status=status.HTTP_400_BAD_REQUEST)
