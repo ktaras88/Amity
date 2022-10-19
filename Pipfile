@@ -17,6 +17,8 @@ sentry-sdk = "*"
 djangorestframework-simplejwt = "*"
 django-localflavor = "*"
 pillow = "*"
+django-storages = "*"
+boto3 = "*"
 
 [dev-packages]
 
