@@ -1,20 +1,15 @@
 import tempfile
-
 from PIL import Image
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import (MinimumLengthValidator)
-from users.validators import (MaximumLengthValidator, NumberValidator, UppercaseValidator,
-                              LowercaseValidator, SymbolValidator)
+from django.core import mail
+
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import InvitationToken
 User = get_user_model()
-from django.core import mail
-
 
 
 class TokenObtainPairViewTestCase(APITestCase):
@@ -145,6 +140,7 @@ class ResetPasswordSecurityCodeTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['email'][0], 'This field is required.')
         self.assertEqual(response.data['security_code'][0], 'This field is required.')
+
 
 class CreateNewPasswordTestCase(APITestCase):
     def setUp(self):
