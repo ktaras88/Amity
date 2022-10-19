@@ -104,3 +104,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({'password': list(e.messages)})
         return attr
+
+
+class UserSerializer(serializers.Serializer):
+    pass
