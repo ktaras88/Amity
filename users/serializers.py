@@ -106,5 +106,11 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         return attr
 
 
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar', 'avatar_coord']
+
+
 class UserSerializer(serializers.Serializer):
     pass

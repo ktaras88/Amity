@@ -2,14 +2,15 @@ import random
 from string import digits
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import send_mail
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, FileExtensionValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import ValidationError
 
-from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL
+from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL, VALID_EXTENSIONS
 from .choices_types import ProfileRoles
 from .managers import UserManager
 
@@ -25,12 +26,22 @@ class User(AbstractBaseUser):
                 "'+999999999'. Up to 15 digits allowed.",
     )
 
+    def validate_size(fieldfile_obj):
+        filesize = fieldfile_obj.size
+        megabyte_limit = 5.0
+        if filesize > megabyte_limit * 1024 * 1024:
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
+
+    def file_path(instance, filename):
+        return 'media/avatars/' + str(instance.id)
+
     first_name = models.CharField('first name', max_length=100, null=True, blank=True)
     last_name = models.CharField('last name', max_length=100, null=True, blank=True)
     email = models.EmailField('email address', unique=True, db_index=True)
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
-    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to='media/')
+    avatar = models.ImageField('user avatar', null=True, blank=True, upload_to=file_path, validators=[
+        FileExtensionValidator(VALID_EXTENSIONS), validate_size])
     avatar_coord = models.JSONField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
