@@ -13,3 +13,8 @@ match environment:
             from .prod import *
         except ImportError:
             pass
+    case 'test':
+        try:
+            from .test import *
+        except ImportError:
+            pass
