@@ -52,12 +52,6 @@ class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
     permission_classes = (AllowAny, )
 
-    def get(self, request):
-        print(request.user)
-        token = request.data.get('refresh')
-        role = AccessToken(token)['role']
-        return Response({})
-
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
