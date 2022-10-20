@@ -1,3 +1,4 @@
+import io
 import tempfile
 
 from PIL import Image
@@ -37,24 +38,32 @@ class TokenObtainPairViewTestCase(APITestCase):
 
 
 class UserAvatarAPIViewTestCase(APITestCase):
+    def generate_photo_file(self):
+        file = io.BytesIO()
+        image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
+        image.save(file, 'png')
+        file.name = 'test.png'
+        file.seek(0)
+        return file
+
     def setUp(self):
         self.user = User.objects.create_superuser(email='super@super.super', password='strong')
-        self.url = f'/api/v1.0/users/{self.user.id}/avatar/'
+        self.url = reverse('v1.0:users:user-avatar', kwargs={'pk': self.user.id})
+        self.user.avatar = self.generate_photo_file()
+        self.user.avatar_coord = 100
 
         self.client = APIClient()
         refresh = RefreshToken.for_user(self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
 
-        image = Image.new('RGB', (100, 100))
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
-        image.save(tmp_file)
-        tmp_file.seek(0)
-
-        self.data = {'avatar': tmp_file, 'avatar_coord': 100}
+        self.data = {'avatar': self.user.avatar, 'avatar_coord': self.user.avatar_coord}
+        self.res = self.client.put(self.url, self.data)
 
     def test_get_data_for_authenticated_client(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(response.data['avatar'], self.user.avatar)
+        self.assertEqual(response.data['avatar_coord'], self.user.avatar_coord)
 
     def test_get_data_for_un_authenticated_client(self):
         self.client.force_authenticate(user=None, token=None)
@@ -62,12 +71,15 @@ class UserAvatarAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_ensure_avatar_and_coord_recorded(self):
-        response = self.client.put(self.url, self.data)
+        # response = self.client.put(self.url, self.data)
+        response = self.res
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['avatar'])
-        self.assertTrue(response.data['avatar_coord'])
+        # self.assertEqual(response.data['avatar'], self.user.avatar)
+        self.assertEqual(response.data['avatar_coord'], self.user.avatar_coord)
 
     def test_delete_avatar_and_coord(self):
-        self.client.put(self.url, self.data)
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        user = User.objects.get(id=self.user.id)
+        self.assertEqual(bool(user.avatar), False)
+        self.assertEqual(user.avatar_coord, None)

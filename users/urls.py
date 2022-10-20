@@ -1,7 +1,7 @@
 from django.urls import path
 
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView
-
+app_name = 'users'
 urlpatterns = [
     path('forgot-password/', ResetPasswordRequestEmail.as_view(), name='reset-password'),
     path('security-code/', ResetPasswordSecurityCode.as_view(), name='security-code'),
