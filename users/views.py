@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerOrReadOnlyNotForResident
@@ -50,6 +51,12 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
 class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
     permission_classes = (AllowAny, )
+
+    def get(self, request):
+        print(request.user)
+        token = request.data.get('refresh')
+        role = AccessToken(token)['role']
+        return Response({})
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)

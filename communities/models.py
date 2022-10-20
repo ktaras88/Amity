@@ -24,5 +24,4 @@ class Community(models.Model):
     description = models.CharField('description', max_length=100, null=True, blank=True)
     logo = models.ImageField('community logo', null=True, blank=True, upload_to='media/communities/')
     logo_coord = models.JSONField(null=True, blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_by')
     safety_status = models.BooleanField(default=True)
