@@ -38,7 +38,7 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
 
-    def __str__(self):
+    def get_full_name(self):
         return f'{self.first_name} {self.last_name}'
 
     def create_profile(self, role):
@@ -83,6 +83,9 @@ class User(AbstractBaseUser):
         message = strip_tags(html)
 
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
+    def __str__(self):
+        return self.get_full_name()
 
 
 class Profile(models.Model):
