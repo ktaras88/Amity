@@ -13,3 +13,10 @@ class IsOwnerOrReadOnlyNotForResident(IsAuthenticated):
 
         role_exist = Profile.objects.filter(user=request.user).exclude(role=ProfileRoles.RESIDENT).exists()
         return bool(obj == request.user and role_exist and perm)
+
+
+class IsAmityAdministratorOnly(IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        perm = super().has_permission(request, view)
+        role_exist = Profile.objects.filter(user=request.user, role=ProfileRoles.AMITY_ADMINISTRATOR).exists()
+        return bool(role_exist and perm)
