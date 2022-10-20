@@ -2,17 +2,17 @@ import random
 from string import digits
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import send_mail
-from django.core.validators import RegexValidator, FileExtensionValidator
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from rest_framework.authtoken.models import Token
-from rest_framework.exceptions import ValidationError
 
 from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL, VALID_EXTENSIONS
 from .choices_types import ProfileRoles
 from .managers import UserManager
+from .validators import phone_regex, validate_size
 
 
 class InvitationToken(Token):
@@ -20,18 +20,6 @@ class InvitationToken(Token):
 
 
 class User(AbstractBaseUser):
-    phone_regex = RegexValidator(
-        regex=r"^+?1?\d{10,15}$",
-        message="Phone number must be entered in the format: "
-                "'+999999999'. Up to 15 digits allowed.",
-    )
-
-    def validate_size(fieldfile_obj):
-        filesize = fieldfile_obj.size
-        megabyte_limit = 5.0
-        if filesize > megabyte_limit * 1024 * 1024:
-            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
-
     def file_path(instance, filename):
         return 'media/avatars/' + str(instance.id)
 
