@@ -23,10 +23,10 @@ class User(AbstractBaseUser):
     def file_path(instance, filename):
         return 'media/avatars/' + str(instance.id)
 
-    first_name = models.CharField('first name', max_length=100, null=True, blank=True)
-    last_name = models.CharField('last name', max_length=100, null=True, blank=True)
+    first_name = models.CharField('first name', max_length=100)
+    last_name = models.CharField('last name', max_length=100)
     email = models.EmailField('email address', unique=True, db_index=True)
-    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
+    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20)
     password = models.CharField('password', max_length=100, null=True, blank=True)
     avatar = models.ImageField('user avatar', null=True, blank=True, upload_to=file_path, validators=[
         FileExtensionValidator(VALID_EXTENSIONS), validate_size])
@@ -37,6 +37,9 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'
 
     def create_profile(self, role):
         Profile.objects.create(user_id=self.id, role=role)
@@ -80,6 +83,9 @@ class User(AbstractBaseUser):
         message = strip_tags(html)
 
         send_mail(subject, message, EMAIL_HOST_USER, [self.email], html_message=html)
+
+    def __str__(self):
+        return self.get_full_name()
 
 
 class Profile(models.Model):
