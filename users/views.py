@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
@@ -5,10 +6,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerOrReadOnlyNotForResident
-from .models import InvitationToken, User
+from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer
-
+User = get_user_model()
 
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
