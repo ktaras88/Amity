@@ -3,16 +3,15 @@ from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView, token_verify
 
-from .models import InvitationToken
 from amity_api.permission import IsOwnerOrReadOnlyNotForResident
-from .models import InvitationToken, User
+from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
-    CreateNewPasswordSerializer, UserSerializer
+    CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
+    UserContactInformationSerializer, UserPasswordInformationSerializer
 
 User = get_user_model()
-    CreateNewPasswordSerializer, UserAvatarSerializer
 
 
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
@@ -21,7 +20,7 @@ class TokenObtainPairView(SimpleJWTTokenObtainPairView):
 
 class ResetPasswordRequestEmail(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -36,7 +35,7 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
 
 class ResetPasswordSecurityCode(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -54,7 +53,7 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
 
 class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -71,7 +70,7 @@ class CreateNewPassword(generics.GenericAPIView):
 class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
-    permission_classes = (IsOwnerOrReadOnlyNotForResident, )
+    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -87,8 +86,38 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
             return Response({'error': 'There is no avatar.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserRetrieveView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+class UserGeneralInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserGeneralInformationSerializer
     queryset = User.objects.all()
-    permission_classes = {}
+    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
 
+
+class UserContactInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserContactInformationSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, pk, format=None):
+        user = self.get_object(pk)
+        serializer = UserContactInformationSerializer(user)
+        return Response(serializer.data)
+
+    def update(self, validated_data, pk):
+        user = User.objects.get(pk=pk)
+        user.phone_number = validated_data.data['phone_number']
+
+        user.save()
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class UserPasswordInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserPasswordInformationSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
