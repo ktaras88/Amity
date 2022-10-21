@@ -35,16 +35,39 @@ class CommunitiesListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_get_search_by_a_name(self):
+    def test_get_search_by_name(self):
         response = self.client.get(self.url, data={'search': 'community'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['name'], self.com3.name)
 
-    def test_get_search_by_part_of_a_name(self):
+        response1 = self.client.get(self.url, data={'search': 'communi'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data), 1)
+        self.assertEqual(response1.data[0]['name'], self.com3.name)
+
+    def test_get_search_by_part_of_name(self):
         response = self.client.get(self.url, data={'search': 'comm'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
+        self.assertEqual(response.data[0]['name'], self.com1.name)
+        self.assertEqual(response.data[0]['state'], dict(US_STATES)[self.com1.state])
+        self.assertEqual(response.data[0]['address'], self.com1.address)
+        self.assertEqual(response.data[0]['contact_person'], str(self.com1.contact_person))
+        self.assertEqual(response.data[0]['phone_number'], str(self.com1.phone_number))
+        self.assertEqual(response.data[0]['safety_status'], self.com1.safety_status)
+        self.assertEqual(response.data[1]['name'], self.com2.name)
+        self.assertEqual(response.data[1]['state'], dict(US_STATES)[self.com2.state])
+        self.assertEqual(response.data[1]['address'], self.com2.address)
+        self.assertEqual(response.data[1]['contact_person'], str(self.com2.contact_person))
+        self.assertEqual(response.data[1]['phone_number'], str(self.com2.phone_number))
+        self.assertEqual(response.data[1]['safety_status'], self.com2.safety_status)
+        self.assertEqual(response.data[2]['name'], self.com3.name)
+        self.assertEqual(response.data[2]['state'], dict(US_STATES)[self.com3.state])
+        self.assertEqual(response.data[2]['address'], self.com3.address)
+        self.assertEqual(response.data[2]['contact_person'], str(self.com3.contact_person))
+        self.assertEqual(response.data[2]['phone_number'], str(self.com3.phone_number))
+        self.assertEqual(response.data[2]['safety_status'], self.com3.safety_status)
 
     def test_get_search_by_first_name(self):
         response = self.client.get(self.url, data={'search': 'user'})
@@ -53,11 +76,22 @@ class CommunitiesListAPIViewTestCase(APITestCase):
         self.assertEqual(response.data[0]['contact_person'], str(self.com2.contact_person))
         self.assertEqual(response.data[1]['contact_person'], str(self.com3.contact_person))
 
+        response1 = self.client.get(self.url, data={'search': 'us'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data), 2)
+        self.assertEqual(response1.data[0]['contact_person'], str(self.com2.contact_person))
+        self.assertEqual(response1.data[1]['contact_person'], str(self.com3.contact_person))
+
     def test_get_search_by_last_name(self):
         response = self.client.get(self.url, data={'search': 'lastsuper'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['contact_person'], str(self.com1.contact_person))
+
+        response1 = self.client.get(self.url, data={'search': 'lasts'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data), 1)
+        self.assertEqual(response1.data[0]['contact_person'], str(self.com1.contact_person))
 
     def test_get_search_by_state(self):
         response = self.client.get(self.url, data={'search': 'DC'})
@@ -65,8 +99,16 @@ class CommunitiesListAPIViewTestCase(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['state'], dict(US_STATES)[self.com3.state])
 
+        response1 = self.client.get(self.url, data={'search': 'CT'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data), 1)
+        self.assertEqual(response1.data[0]['state'], dict(US_STATES)[self.com2.state])
+
     def test_get_search_have_no_results(self):
         response = self.client.get(self.url, data={'search': 'qqqq'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
-        # import pdb;pdb.set_trace()
+
+        response1 = self.client.get(self.url, data={'search': 'qw'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response1.data, [])
