@@ -48,26 +48,21 @@ class CommunitiesListAPIViewTestCase(APITestCase):
 
     def test_get_search_by_part_of_name(self):
         response = self.client.get(self.url, data={'search': 'comm'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 3)
-        self.assertEqual(response.data[0]['name'], self.com1.name)
-        self.assertEqual(response.data[0]['state'], dict(US_STATES)[self.com1.state])
-        self.assertEqual(response.data[0]['address'], self.com1.address)
-        self.assertEqual(response.data[0]['contact_person'], str(self.com1.contact_person))
-        self.assertEqual(response.data[0]['phone_number'], str(self.com1.phone_number))
-        self.assertEqual(response.data[0]['safety_status'], self.com1.safety_status)
-        self.assertEqual(response.data[1]['name'], self.com2.name)
-        self.assertEqual(response.data[1]['state'], dict(US_STATES)[self.com2.state])
-        self.assertEqual(response.data[1]['address'], self.com2.address)
-        self.assertEqual(response.data[1]['contact_person'], str(self.com2.contact_person))
-        self.assertEqual(response.data[1]['phone_number'], str(self.com2.phone_number))
-        self.assertEqual(response.data[1]['safety_status'], self.com2.safety_status)
-        self.assertEqual(response.data[2]['name'], self.com3.name)
-        self.assertEqual(response.data[2]['state'], dict(US_STATES)[self.com3.state])
-        self.assertEqual(response.data[2]['address'], self.com3.address)
-        self.assertEqual(response.data[2]['contact_person'], str(self.com3.contact_person))
-        self.assertEqual(response.data[2]['phone_number'], str(self.com3.phone_number))
-        self.assertEqual(response.data[2]['safety_status'], self.com3.safety_status)
+        self.assertEqual(response.data[0], {'name': self.com1.name, 'state': dict(US_STATES)[self.com1.state],
+                                            'address': self.com1.address,
+                                            'contact_person': str(self.com1.contact_person),
+                                            'phone_number': str(self.com1.phone_number),
+                                            'safety_status': self.com1.safety_status})
+        self.assertEqual(response.data[1], {'name': self.com2.name, 'state': dict(US_STATES)[self.com2.state],
+                                            'address': self.com2.address,
+                                            'contact_person': str(self.com2.contact_person),
+                                            'phone_number': str(self.com2.phone_number),
+                                            'safety_status': self.com2.safety_status})
+        self.assertEqual(response.data[2], {'name': self.com3.name, 'state': dict(US_STATES)[self.com3.state],
+                                            'address': self.com3.address,
+                                            'contact_person': str(self.com3.contact_person),
+                                            'phone_number': str(self.com3.phone_number),
+                                            'safety_status': self.com3.safety_status})
 
     def test_get_search_by_first_name(self):
         response = self.client.get(self.url, data={'search': 'user'})
