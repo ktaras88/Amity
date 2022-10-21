@@ -19,6 +19,7 @@ django-localflavor = "*"
 pillow = "*"
 django-storages = "*"
 boto3 = "*"
+django-filter = "*"
 
 [dev-packages]
 
