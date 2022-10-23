@@ -10,7 +10,7 @@ class CommunitiesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Community
-        fields = ['name', 'state', 'address', 'contact_person', 'phone_number', 'safety_status']
+        fields = ['id', 'name', 'state', 'address', 'contact_person', 'phone_number', 'safety_status']
 
     def get_contact_person(self, obj):
         return obj.contact_person.get_full_name()

@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'users',
     'drf_yasg',
     'rest_framework_simplejwt',
-    'localflavor',
+    'localflavor'
 ]
 
 MIDDLEWARE = [
@@ -135,7 +135,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
 }
 
 SIMPLE_JWT = {
