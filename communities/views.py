@@ -25,5 +25,5 @@ class CommunitiesListAPIView(ListAPIView):
         safety_off = str(self.request.query_params.get('safety_off')).lower()
 
         if safety_on == 'true':
-            return queryset.filter(safety_status=True) if not safety_off else queryset
+            return queryset.filter(safety_status=True) if safety_off != 'true' else queryset
         return queryset.filter(safety_status=False) if safety_off == 'true' else queryset
