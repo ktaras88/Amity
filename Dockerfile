@@ -6,7 +6,7 @@ RUN apt-get update &&  \
     apt-get upgrade -y && \
     apt-get install -y  \
     #rm -rf /var/lib/apt/lists/*
-    set -eux && \
+    #set -eux && \
     groupadd --system amity && \
     useradd --system amity -g amity && \
     chown -R amity:amity /amity && \
