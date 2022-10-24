@@ -8,12 +8,12 @@ RUN set -eux && \
         gcc \
         python3-dev \
         libpq-dev \
-    pip install pipenv \
-    apt update \
-    apt install nano \
-    nano .env \
-    pipenv shell \
-    pipenv install \
+    pip install pipenv && \
+    apt update && \
+    apt install nano && \
+    nano .env && \
+    pipenv shell && \
+    pipenv install && \
     groupadd \
         --system \
     amity && \
