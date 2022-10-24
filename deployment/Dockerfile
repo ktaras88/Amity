@@ -5,7 +5,7 @@ RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y && \
     apt-get install -y && \
-        gcc \
+        #gcc \
         python3-dev \
         libpq-dev \
         pip install pipenv \
