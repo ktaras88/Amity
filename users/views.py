@@ -3,9 +3,9 @@ from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView, token_verify
+from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from amity_api.permission import IsOwnerOrReadOnlyNotForResident
+from amity_api.permission import IsOwnerNotForResident
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
@@ -20,7 +20,7 @@ class TokenObtainPairView(SimpleJWTTokenObtainPairView):
 
 class ResetPasswordRequestEmail(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -35,7 +35,7 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
 
 class ResetPasswordSecurityCode(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -53,7 +53,7 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
 
 class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -70,7 +70,7 @@ class CreateNewPassword(generics.GenericAPIView):
 class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
-    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
+    permission_classes = (IsOwnerNotForResident, )
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -89,13 +89,13 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
 class UserGeneralInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserGeneralInformationSerializer
     queryset = User.objects.all()
-    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
+    permission_classes = (IsOwnerNotForResident,)
 
 
 class UserContactInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserContactInformationSerializer
     queryset = User.objects.all()
-    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
+    permission_classes = (IsOwnerNotForResident,)
 
     def get_object(self, pk):
         try:
@@ -120,4 +120,4 @@ class UserContactInformationView(generics.RetrieveUpdateAPIView):
 class UserPasswordInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserPasswordInformationSerializer
     queryset = User.objects.all()
-    permission_classes = (IsOwnerOrReadOnlyNotForResident,)
+    permission_classes = (IsOwnerNotForResident,)

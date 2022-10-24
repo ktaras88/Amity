@@ -1,9 +1,8 @@
-from django.core import mail
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 
-from amity_api.settings import EMAIL_HOST_USER
 from ..choices_types import ProfileRoles
-from ..models import User
+User = get_user_model()
 
 
 class TestUserModel(APITestCase):
