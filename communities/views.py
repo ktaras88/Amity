@@ -19,9 +19,7 @@ class CommunitiesListAPIView(ListAPIView):
     permission_classes = (IsAmityAdministrator, )
     pagination_class = CommunitiesListAPIPagination
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_fields = ['safety_status']
     ordering = ['-safety_status', 'name', 'state']
-    filter_backends = [SearchFilter]
     search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
-
