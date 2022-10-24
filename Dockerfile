@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
 WORKDIR /amity-backend-t2
-
+COPY . ./
 RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y && \
@@ -12,8 +12,6 @@ RUN set -eux && \
 
 #FROM 300893877638.dkr.ecr.us-west-2.amazonaws.com/base-amity-t2:v1.0
 # WORKDIR /amity-backend-t2
-
-COPY * /
 
 RUN #set -eux && \
     groupadd \
