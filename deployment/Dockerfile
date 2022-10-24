@@ -13,9 +13,15 @@ RUN set -eux && \
         apt install nano \
         nano .env \
         pipenv shell \
-        pipenv install && \
-    groupadd --system amity && \
-    useradd --system amity -g amity && \
-    chown -R amity:amity /amity-backend-t2
+        pipenv install \
+    groupadd \
+        --system \
+    amity && \
+    useradd \
+        --system \
+    amity \
+        -g \
+    amity && \
+    chown -R amity:amity /amity && \
 EXPOSE 8000
 CMD python manage.py runserver
