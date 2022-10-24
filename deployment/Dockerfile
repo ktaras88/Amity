@@ -11,7 +11,7 @@ RUN set -eux && \
     pip install pipenv && \
     apt update && \
     apt install nano && \
-    nano .env && \
+    #nano .env && \
     pipenv shell && \
     pipenv install && \
     groupadd \
