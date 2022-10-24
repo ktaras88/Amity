@@ -6,14 +6,14 @@ RUN set -eux && \
     apt-get upgrade -y && \
     apt-get install -y && \
         gcc \
-        python3-dev && \
-        libpq-dev && \
-        pip install pipenv && \
-        apt update && \
-        apt install nano && \
-        nano .env && \
-        pipenv shell && \
-        pipenv install && \
+        python3-dev \
+        libpq-dev \
+        pip install pipenv \
+        apt update \
+        apt install nano \
+        nano .env \
+        pipenv shell \
+        pipenv install \
     rm -rf /var/lib/apt/lists/* && \
     groupadd --system amity && \
     useradd --system amity -g amity && \
