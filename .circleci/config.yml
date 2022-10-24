@@ -168,15 +168,15 @@ workflows:
           requires:
             - build_docker_images
 
-      - run_database_migrations:
-          requires:
-            - check_main_branch
-          filters:
-            branches:
-              only:
-                - qa
-                - staging
-                - production
+      # - run_database_migrations:
+      #     requires:
+      #       - check_main_branch
+      #     filters:
+      #       branches:
+      #         only:
+      #           - qa
+      #           - staging
+      #           - production
 
       - deploy_the_aplication:
           requires:
