@@ -10,10 +10,11 @@ RUN set -eux && \
     apt-get install libpq-dev -y &&\
     pip install pipenv && \
     apt update && \
-    apt install nano && \
+    #apt install nano && \
     #nano .env && \
     #pipenv shell && \
     #pipenv install && \
+    rm -rf /var/lib/apt/lists/*
     groupadd \
         --system \
     amity && \
