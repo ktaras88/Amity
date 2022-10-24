@@ -13,14 +13,8 @@ RUN apt-get update &&  \
 # WORKDIR /amity-backend-t2
 
     #set -eux && \
-    groupadd \
-        --system \
-    amity && \
-    useradd \
-        --system \
-    amity \
-        -g \
-    amity && \
+    groupadd --system amity && \
+    useradd --system amity -g amity && \
     chown -R amity:amity /amity && \
     pipenv install
 
