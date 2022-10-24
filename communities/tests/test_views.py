@@ -41,22 +41,17 @@ class CommunitiesListAPIViewTestCase(APITestCase):
         self.assertEqual(len(response.data['results']), 2)
 
     def test_communities_list_safety_status_with_filter_safety_on_show_only_safety_on_communities(self):
-        response = self.client.get(self.url + '?safety_on=True')
+        response = self.client.get(self.url + '?safety_status=true')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 2)
 
     def test_communities_list_safety_status_with_filter_safety_off_show_only_safety_off_communities(self):
-        response = self.client.get(self.url + '?safety_off=True')
+        response = self.client.get(self.url + '?safety_status=false')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 3)
 
-    def test_communities_list_safety_status_with_filter_safety_off_and_safety_on_show_all_communities(self):
-        response = self.client.get(self.url + '?safety_on=True&safety_off=True')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 5)
-
     def test_communities_list_custom_pagination_size_query_param_with_filter_safety_of_only(self):
-        response = self.client.get(self.url + '?size=2&safety_off=true')
+        response = self.client.get(self.url + '?size=2&safety_status=false')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['count'], 3)

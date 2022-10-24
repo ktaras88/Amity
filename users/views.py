@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from amity_api.permission import IsOwnerOrReadOnlyNotForResident
+from amity_api.permission import IsOwnerNotForResident
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer
@@ -67,7 +67,7 @@ class CreateNewPassword(generics.GenericAPIView):
 class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
-    permission_classes = (IsOwnerOrReadOnlyNotForResident, )
+    permission_classes = (IsOwnerNotForResident, )
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
