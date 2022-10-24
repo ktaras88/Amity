@@ -9,7 +9,7 @@ RUN apt-get update &&  \
     #set -eux && \
     groupadd --system amity && \
     useradd --system amity -g amity && \
-    chown -R amity:amity /amity && \
+    chown -R amity:amity /amity-backend-t2 && \
     pipenv install
 
 USER amity
