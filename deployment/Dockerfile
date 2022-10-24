@@ -14,7 +14,7 @@ RUN set -eux && \
     #nano .env && \
     #pipenv shell && \
     #pipenv install && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* \
     groupadd \
         --system \
     amity && \
