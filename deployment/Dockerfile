@@ -5,15 +5,15 @@ RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y && \
     apt-get install -y && \
-        gcc \
-        python3-dev \
-        libpq-dev \
-        pip install pipenv && \
-        apt update && \
-        apt install nano && \
-        nano .env && \
-        pipenv shell && \
-        pipenv install && \
+    apt-get install gcc &&\
+    apt-get install python3-dev &&\
+    apt-get install libpq-dev &&\
+    pip install pipenv && \
+    apt update && \
+    apt install nano && \
+    nano .env && \
+    pipenv shell && \
+    pipenv install && \
     groupadd \
         --system \
     amity && \
