@@ -1,20 +1,22 @@
-version: '3.0'
+version: "3.0"
+
 services:
-  backend:
-    image: $AWS_ECR_ID/$CIRCLE_BRANCH-$PROJECT_NAME:backend-$TAG
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  web:
+    build:
+      context: ../
+      dockerfile: deployment/Dockerfile
+    command: python Amity/manage.py runserver 0.0.0.0:8000 --settings=Amity.settings
     ports:
-      - "<application port>:<application port>"
-    env_file:
-      - ./.env
-    #entrypoint: sh /<project_name>/deployment/init.sh
-    logging:
-      driver: awslogs
-      options: 
-        awslogs-group: /ecs/$CIRCLE_BRANCH-$PROJECT_NAME-backend
-        awslogs-region: $AWS_DEFAULT_REGION
-        awslogs-stream-prefix: $CIRCLE_BRANCH-backend
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 65535
-        hard: 65535
+      - "8000:8000"
+    environment:
+      - DEBUG='True'
+      - DB_NAME=postgres
+      - POSTGRES_USER=postgres
