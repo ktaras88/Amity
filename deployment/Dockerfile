@@ -13,7 +13,7 @@ RUN set -eux && \
         apt install nano \
         nano .env \
         pipenv shell \
-        pipenv install \
+        pipenv install && \
     groupadd --system amity && \
     useradd --system amity -g amity && \
     chown -R amity:amity /amity-backend-t2
