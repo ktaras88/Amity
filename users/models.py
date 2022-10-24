@@ -26,7 +26,8 @@ class User(AbstractBaseUser):
     first_name = models.CharField('first name', max_length=100)
     last_name = models.CharField('last name', max_length=100)
     email = models.EmailField('email address', unique=True, db_index=True)
-    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20)
+    """REMOVE null=True, blank=True IN CASE PHONE NUMBER IS REQUIRED"""
+    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
     avatar = models.ImageField('user avatar', null=True, blank=True, upload_to=file_path, validators=[
         FileExtensionValidator(VALID_EXTENSIONS), validate_size])

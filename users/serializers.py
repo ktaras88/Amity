@@ -1,5 +1,3 @@
-import profile
-
 from django.contrib.auth import authenticate, get_user_model
 from django.core import exceptions
 import django.contrib.auth.password_validation as validators
@@ -11,7 +9,6 @@ from rest_framework.exceptions import ValidationError, AuthenticationFailed as D
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 
-from .choices_types import ProfileRoles
 from .models import InvitationToken, Profile
 
 User = get_user_model()
@@ -142,19 +139,19 @@ class UserContactInformationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'phone_number']
         read_only_fields = ('email',)
-    #
-    # def validate_phone_number(self, value):
-    #     user = self.context['request'].user
-    #     if User.objects.exclude(pk=user.pk).filter(phone_number=value).exists():
-    #         raise serializers.ValidationError({"phone_number": "This phone number is already in use."})
-    #     return value
-    #
-    # def update(self, instance, validated_data):
-    #     instance.phone_number = validated_data['phone_number']
-    #
-    #     instance.save()
-    #
-    #     return instance
+
+    def validate_phone_number(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(phone_number=value).exists():
+            raise serializers.ValidationError({"phone_number": "This phone number is already in use."})
+        return value
+
+    def update(self, instance, validated_data):
+        instance.phone_number = validated_data['phone_number']
+
+        instance.save()
+
+        return instance
 
 
 class UserPasswordInformationSerializer(serializers.ModelSerializer):

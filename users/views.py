@@ -97,25 +97,6 @@ class UserContactInformationView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
 
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def get(self, request, pk, format=None):
-        user = self.get_object(pk)
-        serializer = UserContactInformationSerializer(user)
-        return Response(serializer.data)
-
-    def update(self, validated_data, pk):
-        user = User.objects.get(pk=pk)
-        user.phone_number = validated_data.data['phone_number']
-
-        user.save()
-
-        return Response(status=status.HTTP_200_OK)
-
 
 class UserPasswordInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserPasswordInformationSerializer
