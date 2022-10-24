@@ -34,7 +34,7 @@ jobs:
           attach-workspace: true
           account-url: AWS_ECR_ID
           dockerfile: Dockerfile
-          path: /deployment/
+          path: deployment/
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
           tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
