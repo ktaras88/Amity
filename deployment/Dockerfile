@@ -5,9 +5,9 @@ RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y && \
     apt-get install -y && \
-    apt-get install gcc &&\
-    apt-get install python3-dev &&\
-    apt-get install libpq-dev &&\
+    apt-get install gcc -y &&\
+    apt-get install python3-dev -y &&\
+    apt-get install libpq-dev -y &&\
     pip install pipenv && \
     apt update && \
     apt install nano && \
