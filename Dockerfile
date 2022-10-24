@@ -15,7 +15,7 @@ RUN set -eux && \
 
 COPY . /
 
-RUN set -eux && \
+RUN #set -eux && \
     groupadd \
         --system \
     amity && \
@@ -29,7 +29,7 @@ RUN set -eux && \
 
 USER amity
 CMD python manage.py runserver
-# EXPOSE 8000
+EXPOSE 8000
 
 # CMD gunicorn amity-t2.wsgi:application -b 0.0.0.0:8000 -w 1 -k uvicorn.workers.UvicornWorker
 
