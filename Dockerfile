@@ -13,7 +13,7 @@ RUN set -eux && \
 #FROM 300893877638.dkr.ecr.us-west-2.amazonaws.com/base-amity-t2:v1.0
 # WORKDIR /amity-backend-t2
 
-COPY ./ ./
+COPY .
 
 RUN set -eux && \
     groupadd \

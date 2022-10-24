@@ -9,8 +9,8 @@ task_definition:
   services:
     backend:
       essential: True
-    nginx:
-      essential: true
+    # nginx:
+    #   essential: true
 run_params:
   network_configuration:
     awsvpc_configuration:
