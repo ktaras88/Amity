@@ -4,14 +4,13 @@ WORKDIR /amity-backend-t2
 COPY . ./
 RUN apt-get update &&  \
     apt-get upgrade -y && \
-    apt-get install -y  \
+    #apt-get install -y 
     #rm -rf /var/lib/apt/lists/*
     #set -eux && \
     groupadd --system amity && \
     useradd --system amity -g amity && \
     chown -R amity:amity /amity && \
     pipenv install
-
 
 USER amity
 CMD python manage.py runserver
