@@ -12,8 +12,8 @@ RUN set -eux && \
     apt update && \
     #apt install nano && \
     #nano .env && \
-    pipenv shell && \
-    pipenv install && \
+    #pipenv shell && \
+    #pipenv install && \
     groupadd \
         --system \
     amity && \
