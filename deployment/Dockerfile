@@ -22,6 +22,6 @@ RUN set -eux && \
     amity \
         -g \
     amity && \
-    chown -R amity:amity /amity && \
+    chown -R amity:amity /amity
 EXPOSE 8000
 CMD python manage.py runserver
