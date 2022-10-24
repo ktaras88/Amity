@@ -5,12 +5,9 @@ from users.choices_types import ProfileRoles
 from users.models import Profile
 
 
-class IsOwnerOrReadOnlyNotForResident(IsAuthenticated):
+class IsOwnerNotForResident(IsAuthenticated):
     def has_object_permission(self, request, view, obj):
         perm = super().has_permission(request, view)
-        if request.method in permissions.SAFE_METHODS:
-            return perm
-
         role_exist = Profile.objects.filter(user=request.user).exclude(role=ProfileRoles.RESIDENT).exists()
         return bool(obj == request.user and role_exist and perm)
 
@@ -18,4 +15,4 @@ class IsOwnerOrReadOnlyNotForResident(IsAuthenticated):
 class IsAmityAdministrator(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
-        return bool(request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR and perm)
+        return bool(perm and request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR)
