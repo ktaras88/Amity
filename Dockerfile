@@ -2,8 +2,7 @@ FROM python:3.10-slim
 
 WORKDIR /amity-backend-t2
 COPY . ./
-RUN set -eux && \
-    apt-get update &&  \
+RUN apt-get update &&  \
     apt-get upgrade -y && \
     apt-get install -y  \
     #rm -rf /var/lib/apt/lists/*
@@ -13,7 +12,7 @@ RUN set -eux && \
 #FROM 300893877638.dkr.ecr.us-west-2.amazonaws.com/base-amity-t2:v1.0
 # WORKDIR /amity-backend-t2
 
-    set -eux && \
+    #set -eux && \
     groupadd \
         --system \
     amity && \
