@@ -181,15 +181,15 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
     def test_communities_list_descending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=-state')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['state'], 'Connecticut')
+        self.assertEqual(response.data['results'][0]['state'], 'Delaware')
 
     def test_communities_list_ascending_sort_by_contact_person(self):
-        response = self.client.get(self.url + '?ordering=contact_person')
+        response = self.client.get(self.url + '?ordering=contact_person__first_name&contact_person__last_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['contact_person'], str(self.user))
 
     def test_communities_list_descending_sort_by_contact_person(self):
-        response = self.client.get(self.url + '?ordering=-contact_person')
+        response = self.client.get(self.url + '?ordering=-contact_person__first_name&contact_person__last_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['results'][0]['contact_person'], str(self.user4))
 

@@ -22,4 +22,5 @@ class CommunitiesListAPIView(ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_fields = ['safety_status']
     ordering_fields = ['name', 'address', 'state', 'contact_person__first_name', 'contact_person__last_name']
+    ordering = ['name', 'address', 'state', 'contact_person__first_name', 'contact_person__last_name']
     search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
