@@ -1,0 +1,22 @@
+version: "3.0"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  web:
+    build:
+      context: ../
+      dockerfile: deployment/Dockerfile
+    command: python Amity/manage.py runserver 0.0.0.0:8000 --settings=Amity.settings
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG='True'
+      - DB_NAME=postgres
+      - POSTGRES_USER=postgres
