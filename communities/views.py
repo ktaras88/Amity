@@ -1,8 +1,13 @@
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Value
+from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator
 from .models import Community
@@ -23,3 +28,18 @@ class CommunitiesListAPIView(ListAPIView):
     filterset_fields = ['safety_status']
     ordering = ['name', 'address', 'state', 'contact_person__first_name', 'contact_person__last_name']
     search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
+
+
+class ListForSearchAPIView(APIView):
+    permission_classes = (IsAmityAdministrator,)
+
+    def get(self, request, *args, **kwargs):
+        data_fot_search = Community.objects.values('name', 'state').\
+            annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')).\
+            aggregate(contact_persons=ArrayAgg('contact_person', distinct=True),
+                      community_names=ArrayAgg('name', distinct=True),
+                      states=ArrayAgg('state', distinct=True))
+        search_list = set(data_fot_search['contact_persons'])
+        search_list.update(data_fot_search['community_names'])
+        search_list.update(data_fot_search['states'])
+        return Response({'search_list': search_list})
