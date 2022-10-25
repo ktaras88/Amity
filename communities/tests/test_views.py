@@ -114,20 +114,28 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.url = reverse('v1.0:communities:communities-list')
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
                                                   first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
+                                              first_name='User1_first', last_name='Last1')
+        self.user2 = User.objects.create_user(email='user2@user2.user2', password='user2',
+                                              first_name='User2_first', last_name='Last2')
+        self.user3 = User.objects.create_user(email='user3@user3.user3', password='user3',
+                                              first_name='User3_first', last_name='Last3')
+        self.user4 = User.objects.create_user(email='user4@user4.user4', password='user4',
+                                              first_name='User4_first', last_name='Last4')
         self.client = APIClient()
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
         self.com1 = Community.objects.create(name='Bbb', state='CO', zip_code=1111, address='address1',
-                                             phone_number=1111111, safety_status=True)
+                                             contact_person=self.user4, phone_number=1111111, safety_status=True)
         self.com2 = Community.objects.create(name='Aaaa', state='AL', zip_code=1111, address='address2',
-                                             phone_number=1111111, safety_status=True)
+                                             contact_person=self.user, phone_number=1111111, safety_status=True)
         self.com3 = Community.objects.create(name='Www', state='CT', zip_code=1111, address='address3',
-                                             phone_number=1111111, safety_status=False)
+                                             contact_person=self.user1, phone_number=1111111, safety_status=False)
         self.com4 = Community.objects.create(name='Www', state='DC', zip_code=1111, address='address4',
-                                             phone_number=1111111, safety_status=False)
+                                             contact_person=self.user3, phone_number=1111111, safety_status=False)
         self.com5 = Community.objects.create(name='Aaa', state='DE', zip_code=1111, address='address5',
-                                             phone_number=1111111, safety_status=False)
+                                             contact_person=self.user2, phone_number=1111111, safety_status=False)
 
     def test_communities_list_safety_status_without_filter_show_all_communities(self):
         response = self.client.get(self.url)
@@ -154,3 +162,35 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['count'], 3)
+
+    def test_communities_list_ascending_sort_by_name_and_address(self):
+        response = self.client.get(self.url + '?ordering=name,address')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['name'], 'Aaa')
+
+    def test_communities_list_descending_sort_by_name_and_address(self):
+        response = self.client.get(self.url + '?ordering=-name,address')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['name'], 'Www')
+
+    def test_communities_list_ascending_sort_by_state(self):
+        response = self.client.get(self.url + '?ordering=state')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['state'], 'Alabama')
+
+    def test_communities_list_descending_sort_by_state(self):
+        response = self.client.get(self.url + '?ordering=-state')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['state'], 'Connecticut')
+
+    def test_communities_list_ascending_sort_by_contact_person(self):
+        response = self.client.get(self.url + '?ordering=contact_person')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['contact_person'], str(self.user))
+
+    def test_communities_list_descending_sort_by_contact_person(self):
+        response = self.client.get(self.url + '?ordering=-contact_person')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['contact_person'], str(self.user4))
+
+
