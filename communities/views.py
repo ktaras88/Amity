@@ -27,8 +27,8 @@ class CommunitiesListAPIView(ListAPIView):
 
 
 class CommunityViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.UpdateModelMixin,
+                   # mixins.RetrieveModelMixin,
+                   # mixins.UpdateModelMixin,
                    GenericViewSet):
 
     queryset = Community.objects.select_related('contact_person').all()

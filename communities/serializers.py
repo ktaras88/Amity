@@ -7,8 +7,8 @@ User = get_user_model()
 
 
 class CommunitiesListSerializer(serializers.ModelSerializer):
-    state = serializers.SerializerMethodField()
     contact_person = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
 
     class Meta:
         model = Community
@@ -18,7 +18,7 @@ class CommunitiesListSerializer(serializers.ModelSerializer):
         return obj.contact_person.get_full_name() if obj.contact_person else ''
 
     def get_state(self, obj):
-        return dict(US_STATES)[obj.state] if obj.contact_person else ''
+        return dict(US_STATES)[obj.state]
 
 
 class CommunitySerializer(serializers.ModelSerializer):
