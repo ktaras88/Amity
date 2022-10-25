@@ -2,6 +2,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
+from localflavor.us.us_states import US_STATES
 from rest_framework import mixins
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -54,3 +55,9 @@ class ListForSearchAPIView(APIView):
         search_list.update(data_fot_search['states'])
         return Response({'search_list': search_list})
 
+
+class StatesListAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor, )
+
+    def get(self, request, *args, **kwargs):
+        return Response({'state_list': US_STATES})
