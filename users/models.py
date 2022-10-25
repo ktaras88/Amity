@@ -23,8 +23,8 @@ class User(AbstractBaseUser):
     def file_path(instance, filename):
         return 'media/avatars/' + str(instance.id)
 
-    first_name = models.CharField('first name', max_length=100, default='blank name')
-    last_name = models.CharField('last name', max_length=100, default='blank surname')
+    first_name = models.CharField('first name', max_length=100, blank=False, null=False)
+    last_name = models.CharField('last name', max_length=100, blank=False, null=False)
     email = models.EmailField('email address', unique=True, db_index=True)
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
