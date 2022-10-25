@@ -10,6 +10,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as Si
 from rest_framework_simplejwt.settings import api_settings
 
 from .models import InvitationToken, Profile
+from .validators import phone_regex
 
 User = get_user_model()
 
@@ -135,6 +136,8 @@ class UserGeneralInformationSerializer(serializers.ModelSerializer):
 
 
 class UserContactInformationSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(validators=[phone_regex])
+
     class Meta:
         model = User
         fields = ['email', 'phone_number']
