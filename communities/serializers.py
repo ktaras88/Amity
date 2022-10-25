@@ -25,12 +25,3 @@ class CommunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = '__all__'
-
-
-class CommynityContactPerson():
-    full_name = serializers.CharField()
-    email = serializers.EmailField(read_only=True)
-    phone_number = serializers.CharField(read_only=True)
-
-    def get_full_name(self, obj):
-        pass
