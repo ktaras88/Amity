@@ -3,10 +3,6 @@
 import os
 import sys
 
-import pexpect
-ftp_process = pty.spawn('ftp')
-ftp_process.interact()
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'amity_api.settings')
