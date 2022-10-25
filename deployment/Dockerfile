@@ -13,7 +13,7 @@ RUN set -eux && \
     apt update && \
     #apt install nano && \
     #nano .env && \
-    pipenv shell && \
+    pipenv shell --fancy && \
     pwd \
     pipenv install --system --skip-lock  && \
     groupadd \
