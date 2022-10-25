@@ -9,5 +9,5 @@ urlpatterns = [
     path('', CommunitiesListAPIView.as_view(), name='communities-list'),
     path('', CommunityViewSet.as_view({'post': 'create'}), name='community-create'),
     path('search-list/', ListForSearchAPIView.as_view(), name='search-list'),
-    path('states-list/', StatesListAPIView.as_view(), name='states-list'),
+    path('states/', StatesListAPIView.as_view(), name='states-list'),
 ]

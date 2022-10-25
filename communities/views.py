@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Value
 from django.db.models.functions import Concat
@@ -14,6 +15,8 @@ from rest_framework.views import APIView
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor
 from .models import Community
 from .serializers import CommunitiesListSerializer, CommunitySerializer
+
+User = get_user_model()
 
 
 class CommunitiesListAPIPagination(PageNumberPagination):
@@ -32,10 +35,7 @@ class CommunitiesListAPIView(ListAPIView):
     search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
 
 
-
-class CommunityViewSet(mixins.CreateModelMixin,
-                   GenericViewSet):
-
+class CommunityViewSet(mixins.CreateModelMixin, GenericViewSet):
     queryset = Community.objects.select_related('contact_person').all()
     serializer_class = CommunitySerializer
     permission_classes = (IsAmityAdministratorOrSupervisor, )
@@ -60,4 +60,4 @@ class StatesListAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
     def get(self, request, *args, **kwargs):
-        return Response({'state_list': US_STATES})
+        return Response({'states_list': dict(US_STATES)})
