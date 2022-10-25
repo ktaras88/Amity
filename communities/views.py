@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor
-from .models import Community
+from .models import Community, User
 from .serializers import CommunitiesListSerializer, CommunitySerializer
 
 
@@ -31,10 +31,7 @@ class CommunitiesListAPIView(ListAPIView):
     search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
 
 
-
-class CommunityViewSet(mixins.CreateModelMixin,
-                   GenericViewSet):
-
+class CommunityViewSet(mixins.CreateModelMixin, GenericViewSet):
     queryset = Community.objects.select_related('contact_person').all()
     serializer_class = CommunitySerializer
     permission_classes = (IsAmityAdministratorOrSupervisor, )
@@ -54,3 +51,12 @@ class ListForSearchAPIView(APIView):
         search_list.update(data_fot_search['states'])
         return Response({'search_list': search_list})
 
+
+class SupervisorDataAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor, )
+
+    def get(self,  request, *args, **kwargs):
+        supervisor_data = User.objects.values('email', 'phone_number').\
+            annotate(supervisor_name=Concat('first_name', Value('  '), 'last_name'))
+
+        return Response({'supervisor_data': list(supervisor_data)})
