@@ -124,7 +124,7 @@ jobs:
               sed -i "s@AWS_DEFAULT_REGION@${AWS_DEFAULT_REGION}@" deployment/docker-compose.yml
               curl -o ./ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
               chmod +x ./ecs-cli
-              aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/amity-backend-t2" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+              aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
               jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed 's/"//g' > deployment/.env
               export $(cat deployment/.env | grep -v '#' | awk '/=/ {print $1}')
               ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --profile-name default
