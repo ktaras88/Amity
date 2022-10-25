@@ -3,6 +3,9 @@
 import os
 import sys
 
+import pexpect
+ftp_process = pty.spawn('ftp')
+ftp_process.interact()
 
 def main():
     """Run administrative tasks."""
