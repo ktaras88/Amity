@@ -2,20 +2,12 @@ import re
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
-"""
-Password requirements:
-At least 8  characters
-Not longer than 128 characters
-Includes at least 1 lower case character
-Includes at least 1 upper case character
-Includes at least 1 special character
-Includes at least 1 number
-"""
 phone_regex = RegexValidator(
-    regex=r"^+?1?\d{10,15}$",
+    regex=r"^(\+\d{1,3})?,?\s?\d{8,13}",
     message="Phone number must be entered in the format: "
             "'+999999999'. Up to 15 digits allowed.",
 )
+
 
 def validate_size(fieldfile_obj):
     filesize = fieldfile_obj.size
