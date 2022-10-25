@@ -13,8 +13,9 @@ RUN set -eux && \
     apt update && \
     #apt install nano && \
     #nano .env && \
-    sudo pipenv shell && \
-    sudo pipenv install --system --skip-lock  && \
+    pipenv shell && \
+    pwd \
+    pipenv install --system --skip-lock  && \
     groupadd \
         --system \
     amity && \
