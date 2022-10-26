@@ -128,8 +128,8 @@ jobs:
               curl -o ./ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
               chmod +x ./ecs-cli
               ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --profile-name default
-              ./ecs-cli configure --cluster $CIRCLE_BRANCH-$PROJECT_NAME-backend --region $AWS_DEFAULT_REGION --default-launch-type FARGATE
-              ./ecs-cli compose -f deployment/docker-compose.yml --ecs-params deployment/ecs-params.yml --project-name "$CIRCLE_BRANCH-$PROJECT_NAME-backend" \
+              ./ecs-cli configure --cluster $CIRCLE_BRANCH-$PROJECT_NAME --region $AWS_DEFAULT_REGION --default-launch-type FARGATE
+              ./ecs-cli compose -f deployment/docker-compose.yml --ecs-params deployment/ecs-params.yml --project-name "$CIRCLE_BRANCH-$PROJECT_NAME" \
                   service up --cluster-config default --target-group-arn ${!TARGET_GROUP_ARN} --container-name backend --container-port 8000 \
                   --role ecsServiceRole --force-deployment --timeout 30
             else
