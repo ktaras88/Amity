@@ -29,7 +29,7 @@ function add_ip_to_rds_sg() {
 
 # Rails command ouputs result "up" means the migration has been run and "down" means that we need to run the migration. 
 function check_migrations () {
-if [ "$(docker exec backend sh -c 'rails db:migrate:status | grep -c "^\s*down"')" == "0" ]; then
+if [ "$(docker exec backend sh -c 'rails db:migrate:status | grep -c "^\s*down"')" == "0" ]; then   #####
     export run_migrations=false
 else
     export run_migrations=true
@@ -60,7 +60,7 @@ function create_new_snapshots() {
 }
 
 function run_migrations() {
-docker exec -u 0 backend sh -c 'bin/rails db:migrate'
+docker exec -u 0 backend sh -c 'bin/rails db:migrate' #####
 }
 
 function main() {

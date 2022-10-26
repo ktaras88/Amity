@@ -116,7 +116,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-              export TARGET_GROUP_ARN=${CIRCLE_BRANCH^^}_TARGET_GROUP
+              export TARGET_GROUP_ARN=TARGET_GROUP_ARN_${CIRCLE_BRANCH^^}
               sed -i "s@TAG@<<pipeline.number>>-${CIRCLE_SHA1}@" deployment/docker-compose.yml
               sed -i "s@ENV@${CIRCLE_BRANCH}@" deployment/docker-compose.yml
               sed -i "s@AWS_ECR_ID@${AWS_ECR_ID}@" deployment/docker-compose.yml
@@ -130,7 +130,7 @@ jobs:
               ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY \
               ./ecs-cli configure --cluster $CIRCLE_BRANCH-$PROJECT_NAME --region $AWS_DEFAULT_REGION --default-launch-type FARGATE \
               ./ecs-cli compose -f deployment/docker-compose.yml --ecs-params deployment/ecs-params.yml --project-name "$CIRCLE_BRANCH-$PROJECT_NAME" \
-                  service up --cluster-config default --target-group-arn ${!TARGET_GROUP_ARN_QA} --container-name $AWS_ECR_ID/${ENV}-${PROJECT_NAME}:${tag} --container-port 8000 \
+                  service up --cluster-config default --target-group-arn ${!TARGET_GROUP_ARN} --container-name backend --container-port 8000 \
                   --role ecsServiceRole --force-deployment --timeout 30
             else
               echo "This step is only for qa, staging, production branches"

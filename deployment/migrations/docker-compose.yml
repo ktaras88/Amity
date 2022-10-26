@@ -3,6 +3,6 @@ services:
   backend:
     image: IMAGE_NAME
     container_name: backend
-    entrypoint: sleep 1800
+    entrypoint: sleep 3600
     env_file:
       - ./.env
