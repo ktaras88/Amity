@@ -10,6 +10,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as Si
 from rest_framework_simplejwt.settings import api_settings
 
 from .models import InvitationToken, Profile
+from .validators import phone_regex
+
 User = get_user_model()
 
 class AuthenticationFailed(DRFAuthenticationFailed):
@@ -110,3 +112,74 @@ class UserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar', 'avatar_coord']
+
+
+class UserGeneralInformationSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'role']
+
+    def get_role(self, obj):
+        role = self.context['request'].auth['role']
+        return role
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data['first_name']
+        instance.last_name = validated_data['last_name']
+
+        instance.save()
+
+        return instance
+
+
+class UserContactInformationSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(validators=[phone_regex])
+
+    class Meta:
+        model = User
+        fields = ['email', 'phone_number']
+        read_only_fields = ('email',)
+
+    def validate_phone_number(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(phone_number=value).exists():
+            raise serializers.ValidationError({"phone_number": "This phone number is already in use."})
+        return value
+
+    def update(self, instance, validated_data):
+        instance.phone_number = validated_data['phone_number']
+
+        instance.save()
+
+        return instance
+
+
+class UserPasswordInformationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validators.validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+    old_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['old_password', 'password', 'password2']
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({'password': "Password fields didn't match."})
+
+        return attrs
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError({'old_password': "Old password is not correct"})
+        return value
+
+    def update(self, instance, validated_data):
+
+        instance.set_password(validated_data['password'])
+        instance.save()
+
+        return instance
