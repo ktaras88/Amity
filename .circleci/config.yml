@@ -127,7 +127,7 @@ jobs:
               aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
               jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed 's/"//g' > deployment/.env
               export $(cat deployment/.env | grep -v '#' | awk '/=/ {print $1}')
-              ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --profile-name $AWS_PROFILE
+              ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --profile-name default
               ./ecs-cli configure --cluster $CIRCLE_BRANCH-$PROJECT_NAME --region $AWS_DEFAULT_REGION --default-launch-type FARGATE
               ./ecs-cli compose -f deployment/docker-compose.yml --ecs-params deployment/ecs-params.yml --project-name "$CIRCLE_BRANCH-$PROJECT_NAME" \
                   service up --cluster-config default --target-group-arn ${!TARGET_GROUP_ARN_QA} --container-name $AWS_ECR_ID/${ENV}-${PROJECT_NAME}:${tag} --container-port 8000 \
