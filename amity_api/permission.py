@@ -16,3 +16,9 @@ class IsAmityAdministrator(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         return bool(perm and request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR)
+
+
+class IsAmityAdministratorOrSupervisor(IsAuthenticated):
+    def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        return bool(perm and request.auth['role'] in (ProfileRoles.AMITY_ADMINISTRATOR, ProfileRoles.SUPERVISOR))

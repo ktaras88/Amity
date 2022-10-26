@@ -8,8 +8,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTToken
 from amity_api.permission import IsOwnerNotForResident
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
-    CreateNewPasswordSerializer, UserAvatarSerializer
+    CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
+    UserContactInformationSerializer, UserPasswordInformationSerializer
+
 User = get_user_model()
+
 
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
@@ -81,3 +84,21 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
                 return Response({'error': 'There is no avatar_coord.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'There is no avatar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserGeneralInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserGeneralInformationSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsOwnerNotForResident,)
+
+
+class UserContactInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserContactInformationSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsOwnerNotForResident,)
+
+
+class UserPasswordInformationView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserPasswordInformationSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsOwnerNotForResident,)
