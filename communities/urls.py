@@ -1,7 +1,6 @@
 from django.urls import path
-
 from .views import CommunitiesListAPIView, CommunityViewSet, SearchPredictionsAPIView, SupervisorDataAPIView, \
-    StatesListAPIView
+    StatesListAPIView, SwitchSafetyLockAPIView
 
 app_name = 'communities'
 
@@ -11,4 +10,5 @@ urlpatterns = [
     path('search-predictions/', SearchPredictionsAPIView.as_view(), name='search-predictions'),
     path('supervisor-data/', SupervisorDataAPIView.as_view(), name='supervisor-data'),
     path('states/', StatesListAPIView.as_view(), name='states-list'),
+    path('<int:pk>/switch-safety-status/', SwitchSafetyLockAPIView.as_view(), name='switch-safety-status'),
 ]

@@ -4,7 +4,7 @@ from django.db.models import Value, CharField
 from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from localflavor.us.us_states import US_STATES
-from rest_framework import mixins
+from rest_framework import mixins, generics
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor
 from .models import Community
-from .serializers import CommunitiesListSerializer, CommunitySerializer
+from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer
 
 User = get_user_model()
 
@@ -75,3 +75,8 @@ class StatesListAPIView(APIView):
     def get(self, request, *args, **kwargs):
         return Response({'states_list': dict(US_STATES)})
 
+
+class SwitchSafetyLockAPIView(generics.UpdateAPIView):
+    queryset = Community.objects.select_related('contact_person').all()
+    permission_classes = (IsAmityAdministratorOrSupervisor, )
+    serializer_class = SwitchSafetyLockSerializer
