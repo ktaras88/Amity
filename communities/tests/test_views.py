@@ -163,20 +163,36 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['count'], 3)
 
-    def test_communities_list_ascending_sort_by_name_and_address(self):
-        response = self.client.get(self.url + '?ordering=name,address')
+    def test_communities_list_ascending_sort_by_name(self):
+        response = self.client.get(self.url + '?ordering=name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['name'], 'Aaa')
+        response_order = [item['name'] for item in response.data['results']]
+        expected_order = [self.com5['name'], self.com2['name'], self.com1['name'], self.com3['name'], self.com4['name']]
+        self.assertEqual(response_order, expected_order)
+
+    def test_communities_list_descending_sort_by_name(self):
+        response = self.client.get(self.url + '?ordering=-name')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_order = [item['name'] for item in response.data['results']]
+        expected_order = [self.com4['name'], self.com3['name'], self.com1['name'], self.com2['name'], self.com5['name']]
+        self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_name_and_address(self):
-        response = self.client.get(self.url + '?ordering=-name,address')
+        response = self.client.get(self.url + '?ordering=name,address')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['name'], 'Www')
+        response_order = [item['name'] for item in response.data['results']]
+        expected_order = [self.com4['name'], self.com3['name'], self.com1['name'], self.com2['name'], self.com5['name']]
+        self.assertEqual(response_order, expected_order)
 
     def test_communities_list_ascending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=state')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['state'], 'Alabama')
+        response_order = [item['state'] for item in response.data['results']]
+        # print(response_order)
+        # print(self.com2.name)
+        expected_order = [self.com2.state, self.com1['state'], self.com3['state'],
+                          self.com4['state'], self.com5['state']]
+        self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=-state')
