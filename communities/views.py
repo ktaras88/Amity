@@ -35,7 +35,7 @@ class CommunitiesListAPIView(ListAPIView):
     filterset_fields = ['safety_status']
     ordering_fields = ['name', 'address', 'state', 'contact_person_name']
     ordering = ['name', 'address', 'state', 'contact_person_name']
-    search_fields = ['name', 'state', 'contact_person__first_name', 'contact_person__last_name']
+    search_fields = ['name', 'state', 'contact_person_name']
 
 
 class CommunityViewSet(mixins.CreateModelMixin, GenericViewSet):
