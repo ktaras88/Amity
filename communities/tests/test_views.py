@@ -167,46 +167,69 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         response = self.client.get(self.url + '?ordering=name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_order = [item['name'] for item in response.data['results']]
-        expected_order = [self.com5['name'], self.com2['name'], self.com1['name'], self.com3['name'], self.com4['name']]
+        expected_order = [self.com5.__dict__['name'], self.com2.__dict__['name'], self.com1.__dict__['name'],
+                          self.com3.__dict__['name'], self.com4.__dict__['name']]
         self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_name(self):
         response = self.client.get(self.url + '?ordering=-name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_order = [item['name'] for item in response.data['results']]
-        expected_order = [self.com4['name'], self.com3['name'], self.com1['name'], self.com2['name'], self.com5['name']]
+        expected_order = [self.com4.__dict__['name'], self.com3.__dict__['name'], self.com1.__dict__['name'],
+                          self.com2.__dict__['name'], self.com5.__dict__['name']]
+        self.assertEqual(response_order, expected_order)
+
+    def test_communities_list_ascending_sort_by_name_and_address(self):
+        response = self.client.get(self.url + '?ordering=name,address')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_order = [{item['name']: item['address']} for item in response.data['results']]
+        expected_order = [{self.com5.__dict__['name']: self.com5.__dict__['address']},
+                          {self.com2.__dict__['name']: self.com2.__dict__['address']},
+                          {self.com1.__dict__['name']: self.com1.__dict__['address']},
+                          {self.com3.__dict__['name']: self.com3.__dict__['address']},
+                          {self.com4.__dict__['name']: self.com4.__dict__['address']}]
         self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_name_and_address(self):
-        response = self.client.get(self.url + '?ordering=name,address')
+        response = self.client.get(self.url + '?ordering=-name,-address')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_order = [item['name'] for item in response.data['results']]
-        expected_order = [self.com4['name'], self.com3['name'], self.com1['name'], self.com2['name'], self.com5['name']]
+        response_order = [{item['name']: item['address']} for item in response.data['results']]
+        expected_order = [{self.com4.__dict__['name']: self.com4.__dict__['address']},
+                          {self.com3.__dict__['name']: self.com3.__dict__['address']},
+                          {self.com1.__dict__['name']: self.com1.__dict__['address']},
+                          {self.com2.__dict__['name']: self.com2.__dict__['address']},
+                          {self.com5.__dict__['name']: self.com5.__dict__['address']}]
         self.assertEqual(response_order, expected_order)
+
 
     def test_communities_list_ascending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=state')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_order = [item['state'] for item in response.data['results']]
-        # print(response_order)
-        # print(self.com2.name)
-        expected_order = [self.com2.state, self.com1['state'], self.com3['state'],
-                          self.com4['state'], self.com5['state']]
+        expected_order = [dict(US_STATES)[self.com2.state], dict(US_STATES)[self.com1.state],
+                          dict(US_STATES)[self.com3.state], dict(US_STATES)[self.com4.state],
+                          dict(US_STATES)[self.com5.state]]
         self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=-state')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['state'], 'Delaware')
+        response_order = [item['state'] for item in response.data['results']]
+        expected_order = [dict(US_STATES)[self.com5.state], dict(US_STATES)[self.com4.state],
+                          dict(US_STATES)[self.com3.state], dict(US_STATES)[self.com1.state],
+                          dict(US_STATES)[self.com2.state]]
+        self.assertEqual(response_order, expected_order)
 
     def test_communities_list_ascending_sort_by_contact_person(self):
-        response = self.client.get(self.url + '?ordering=contact_person__first_name&contact_person__last_name')
+        response = self.client.get(self.url + '?ordering=contact_person_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['contact_person'], str(self.user))
+        response_order = [item['contact_person_name'] for item in response.data['results']]
+        expected_order = [str(self.user), str(self.user1), str(self.user2), str(self.user3), str(self.user4)]
+        self.assertEqual(response_order, expected_order)
 
     def test_communities_list_descending_sort_by_contact_person(self):
-        response = self.client.get(self.url + '?ordering=-contact_person__first_name&contact_person__last_name')
+        response = self.client.get(self.url + '?ordering=-contact_person_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['contact_person'], str(self.user4))
-
-
+        response_order = [item['contact_person_name'] for item in response.data['results']]
+        expected_order = [str(self.user4), str(self.user3), str(self.user2), str(self.user1), str(self.user)]
+        self.assertEqual(response_order, expected_order)
