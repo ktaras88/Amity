@@ -295,18 +295,12 @@ class UserContactInformationTestCase(APITestCase):
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    """ UNCOMMENT IN CASE PHONE NUMBER IS REQUIRED """
-    # def test_ensure_phone_number_not_blank(self):
-    #     data = {'phone_number': ''}
-    #     response = self.client.put(self.url, data)
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #     self.assertEqual(response.data['phone_number'][0], "This field may not be blank.")
-
     def test_ensure_phone_number_above_20_symbols_fails(self):
         data = {'phone_number': '0958552153095855215334'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['phone_number'][0], "Ensure this field has no more than 20 characters.")
+        self.assertEqual(response.data['phone_number'][0], "Phone number must be entered in the format: "
+                                                           "'+999999999'. Up to 15 digits allowed.")
 
 
 class UserPasswordInformationTestCase(APITestCase):
