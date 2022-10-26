@@ -1,8 +1,9 @@
 version: '3'
-services:
-  backend:
-    image: IMAGE_NAME
+backend:
     container_name: backend
-    entrypoint: sleep 3600
+    image: IMAGE_NAME
     env_file:
       - ./.env
+    command: #bin/rails server -p 5000 -e $RAILS_ENV
+    ports:
+      - '5000:5000'
