@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import CommunitiesListAPIView, CommunityViewSet, SearchPredictionsAPIView, SupervisorDataAPIView
+from .views import CommunitiesListAPIView, CommunityViewSet, SearchPredictionsAPIView, SupervisorDataAPIView, \
+    StatesListAPIView
 
 app_name = 'communities'
 

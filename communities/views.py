@@ -45,14 +45,14 @@ class SearchPredictionsAPIView(APIView):
     permission_classes = (IsAmityAdministrator,)
 
     def get(self, request, *args, **kwargs):
-        data_fot_search = Community.objects.values('name', 'state').\
+        data_for_search = Community.objects.values('name', 'state').\
             annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')).\
             aggregate(contact_persons=ArrayAgg('contact_person', distinct=True),
                       community_names=ArrayAgg('name', distinct=True),
                       states=ArrayAgg('state', distinct=True))
-        search_list = set(data_fot_search['contact_persons'])
-        search_list.update(data_fot_search['community_names'])
-        search_list.update(data_fot_search['states'])
+        search_list = set(data_for_search['contact_persons'])
+        search_list.update(data_for_search['community_names'])
+        search_list.update(data_for_search['states'])
         return Response({'search_list': search_list})
 
 
