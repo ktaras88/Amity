@@ -1,13 +1,13 @@
 from django.urls import path
 
 
-from .views import CommunitiesListAPIView, CommunityViewSet, ListForSearchAPIView, SupervisorDataAPIView
+from .views import CommunitiesListAPIView, CommunityViewSet, SearchPredictionsAPIView, SupervisorDataAPIView
 
 app_name = 'communities'
 
 urlpatterns = [
     path('', CommunitiesListAPIView.as_view(), name='communities-list'),
     path('', CommunityViewSet.as_view({'post': 'create'}), name='community-create'),
-    path('search-list/', ListForSearchAPIView.as_view(), name='search-list'),
+    path('search-predictions/', SearchPredictionsAPIView.as_view(), name='search-predictions'),
     path('supervisor-data/', SupervisorDataAPIView.as_view(), name='supervisor-data'),
 ]

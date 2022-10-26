@@ -37,7 +37,7 @@ class CommunityViewSet(mixins.CreateModelMixin, GenericViewSet):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
     
-class ListForSearchAPIView(APIView):
+class SearchPredictionsAPIView(APIView):
     permission_classes = (IsAmityAdministrator,)
 
     def get(self, request, *args, **kwargs):
