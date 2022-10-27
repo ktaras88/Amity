@@ -223,3 +223,35 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         response_order = [item['contact_person_name'] for item in response.data['results']]
         expected_order = [str(self.user4), str(self.user3), str(self.user2), str(self.user1), str(self.user)]
         self.assertEqual(response_order, expected_order)
+
+
+class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
+                                            contact_person=self.user, phone_number=1230456204, safety_status=True)
+        self.url = reverse('v1.0:communities:switch-safety-status', args=[self.com.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_communities_list_switch_safety_status(self):
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['safety_status'], False)
+
+    def test_communities_list_switch_safety_status_by_non_authorised(self):
+        self.client.force_authenticate(user=None, token=None)
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
+
+    def test_communities_list_switch_safety_status_by_not_admin_or_supervisor(self):
+        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
+                                              first_name='User1_first', last_name='Last1')
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user1.user1', 'password': 'user1'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
