@@ -1,6 +1,7 @@
 version: '3'
 
-backend:
+services:
+  backend:
     container_name: backend
     image: IMAGE_NAME
     env_file:
