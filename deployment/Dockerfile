@@ -1,21 +1,24 @@
 FROM python:3.10
+
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
+
 WORKDIR /amity-backend-t2
-COPY . ./
+
+COPY . .
+
 RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y && \
-    apt-get install -y && \
-    apt-get install gcc -y &&\
-    apt-get install python3-dev -y &&\
-    apt-get install libpq-dev -y &&\
+    apt-get install -y \
+        gcc \
+        python3-dev \
+        libpq-dev && \
     pip install --upgrade pip && \
     pip install pipenv && \
-    apt update && \
-    #apt install nano && \
-    #nano .env && \
-    pipenv shell --fancy && \
-    pwd \
-    pipenv install --system --skip-lock  && \
+    PIPENV_VENV_IN_PROJECT=1 pipenv install --system  && \
     groupadd \
         --system \
     amity && \
@@ -25,6 +28,5 @@ RUN set -eux && \
         -g \
     amity && \
     chown -R amity:amity /amity-backend-t2
+
 EXPOSE 8000
-#CMD python manage.py runserver
-CMD python manage.py runserver 0.0.0.0:8000

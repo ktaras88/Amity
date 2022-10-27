@@ -68,14 +68,14 @@ function main() {
     add_ip_to_rds_sg
     check_migrations
     
-if [ "$run_migrations" == "true" ]; then
+# if [ "$run_migrations" == "true" ]; then
     delete_old_snapshot
     create_new_snapshots
     run_migrations
     delete_ip_from_rds_sg
-else
-    delete_ip_from_rds_sg
-fi
+# else
+#     delete_ip_from_rds_sg
+# fi
 }
 
 main "$@" || (delete_ip_from_rds_sg && exit 1)
