@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     env_file:
       - ./.env
-    entrypoint: python manage.py runserver 0.0.0.0:8000
+    entrypoint: python manage.py runserver 0.0.0.0:8000 --noreload
     logging:
       driver: awslogs
       options: 
