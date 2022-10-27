@@ -60,13 +60,13 @@ function create_new_snapshots() {
 }
 
 function run_migrations() {
-docker exec -u 0 backend sh -c 'bin/rails db:migrate' #####
+docker exec -u 0 backend sh -c 'python manage.py migrate'
 }
 
 function main() {
     run_docker_compose
     add_ip_to_rds_sg
-    check_migrations
+    # check_migrations
     
 # if [ "$run_migrations" == "true" ]; then
     delete_old_snapshot

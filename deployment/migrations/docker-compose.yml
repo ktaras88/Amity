@@ -5,6 +5,6 @@ backend:
     image: IMAGE_NAME
     env_file:
       - ./.env
-    command: #bin/rails server -p 5000 -e $RAILS_ENV
+    command: sleep 3600
     ports:
-      - '5000:5000'
+      - '8000:8000'
