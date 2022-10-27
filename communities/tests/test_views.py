@@ -240,3 +240,18 @@ class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['safety_status'], False)
+
+    def test_communities_list_switch_safety_status_by_non_authorised(self):
+        self.client.force_authenticate(user=None, token=None)
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
+
+    def test_communities_list_switch_safety_status_by_not_admin_or_supervisor(self):
+        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
+                                              first_name='User1_first', last_name='Last1')
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user1.user1', 'password': 'user1'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
