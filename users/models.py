@@ -7,7 +7,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-from rest_framework.authtoken.models import Token
+import rest_framework.authtoken.models
 
 from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL, VALID_EXTENSIONS
 from .choices_types import ProfileRoles
@@ -15,7 +15,7 @@ from .managers import UserManager
 from .validators import phone_regex, validate_size
 
 
-class InvitationToken(Token):
+class InvitationToken(rest_framework.authtoken.models.Token):
     type = models.CharField(max_length=20, default="invitation")
 
 
@@ -23,10 +23,10 @@ class User(AbstractBaseUser):
     def file_path(instance, filename):
         return 'media/avatars/' + str(instance.id)
 
-    first_name = models.CharField('first name', max_length=100)
-    last_name = models.CharField('last name', max_length=100)
+    first_name = models.CharField('first name', max_length=100, blank=False, null=False)
+    last_name = models.CharField('last name', max_length=100, blank=False, null=False)
     email = models.EmailField('email address', unique=True, db_index=True)
-    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20)
+    phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     password = models.CharField('password', max_length=100, null=True, blank=True)
     avatar = models.ImageField('user avatar', null=True, blank=True, upload_to=file_path, validators=[
         FileExtensionValidator(VALID_EXTENSIONS), validate_size])

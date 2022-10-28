@@ -183,7 +183,7 @@ class CreateNewPasswordTestCase(APITestCase):
         self.assertFalse(InvitationToken.objects.filter(user=self.user).exists())
         user = User.objects.get(id=self.user.id)
         self.assertTrue(user.check_password(data['password']))
-        
+
     def test_ensure_password_is_valid(self):
         data = {'token': self.token, 'password': '12Jsirvm&*knv4', 'confirm_password': '12Jsirvm&*knv4'}
         response = self.client.post(self.url, data)
@@ -229,3 +229,105 @@ class CreateNewPasswordTestCase(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], "The password must contain at least 1 digit, 0-9.")
+
+
+class UserGeneralInformationTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.url = reverse('v1.0:users:user-general-info', args=[self.user.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
+                                                                   'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.user1 = User.objects.create_user(email='mark@hamill.act', password='M@rkHami11',
+                                              first_name='Mark', last_name='Spencer')
+
+    def test_ensure_first_name_and_last_name_are_valid(self):
+        data = {'first_name': 'Mark', 'last_name': 'Hamill'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_ensure_first_name_not_blank(self):
+        data = {'first_name': '', 'last_name': 'Hamill'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['first_name'][0], "This field may not be blank.")
+
+    def test_ensure_last_name_not_blank(self):
+        data = {'first_name': 'Mark', 'last_name': ''}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['last_name'][0], "This field may not be blank.")
+
+    def test_ensure_first_name_above_100_symbols_fails(self):
+        data = {'first_name': 'MarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkMarkmark',
+                'last_name': 'Hamill'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['first_name'][0], "Ensure this field has no more than 100 characters.")
+
+    def test_ensure_last_name_above_100_symbols_fails(self):
+        data = {
+            'first_name': 'Mark',
+            'last_name': 'Hamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamill'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['last_name'][0], "Ensure this field has no more than 100 characters.")
+
+
+class UserContactInformationTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.url = reverse('v1.0:users:user-contact-info', args=[self.user.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
+                                                                   'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.user1 = User.objects.create_user(email='henry@kavill.act', password='HenryK@vi11',
+                                              first_name='Henry', last_name='Kavill')
+
+    def test_ensure_phone_number_is_valid(self):
+        data = {'phone_number': '0669853245'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_ensure_phone_number_above_20_symbols_fails(self):
+        data = {'phone_number': '0958552153095855215334'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['phone_number'][0], "Phone number must be entered in the format: "
+                                                           "'+999999999'. Up to 15 digits allowed.")
+
+
+class UserPasswordInformationTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.url = reverse('v1.0:users:user-password-info', args=[self.user.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        self.user1 = User.objects.create_user(email='jim@parsons.art', password='j1mp@Rs*ns',
+                                              first_name='Jim', last_name='Parsons')
+
+    def test_ensure_password_change_is_valid(self):
+        data = {'old_password': 'strong', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_ensure_old_password_is_invalid(self):
+        data = {'old_password': 'strong133', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['old_password']['old_password'], "Old password is not correct")
+
+    def test_ensure_new_password_and_password_repeat_not_same(self):
+        data = {'old_password': 'strong', 'password': '12Jsirvm&*kn', 'password2': '12Jsirvm&*k'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], 'Password fields didn\'t match.')
