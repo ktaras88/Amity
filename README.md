@@ -54,9 +54,8 @@ How to run a project locally?
 
 1. Preparing
 
-Install pipenv
-
 ```sh
+pip install pipenv
 pipenv shell
 pipenv install
 ```
