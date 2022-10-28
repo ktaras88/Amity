@@ -4,10 +4,11 @@ from django.db.models import Value, CharField
 from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from localflavor.us.us_states import US_STATES
-from rest_framework import mixins, generics
+from rest_framework import mixins, generics, status
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -80,3 +81,10 @@ class SwitchSafetyLockAPIView(generics.UpdateAPIView):
     queryset = Community.objects.all()
     permission_classes = (IsAmityAdministratorOrSupervisor, )
     serializer_class = SwitchSafetyLockSerializer
+
+
+class HealthAPIView(APIView):
+    permission_classes = (AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_200_OK)

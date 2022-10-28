@@ -7,7 +7,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-from rest_framework.authtoken.models import Token
+import rest_framework.authtoken.models
 
 from amity_api.settings import EMAIL_HOST_USER, FRONT_END_NEW_PASSWORD_URL, VALID_EXTENSIONS
 from .choices_types import ProfileRoles
@@ -15,7 +15,7 @@ from .managers import UserManager
 from .validators import phone_regex, validate_size
 
 
-class InvitationToken(Token):
+class InvitationToken(rest_framework.authtoken.models.Token):
     type = models.CharField(max_length=20, default="invitation")
 
 

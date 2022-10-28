@@ -21,6 +21,7 @@ from drf_yasg import openapi
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from communities.views import HealthAPIView
 from users.views import TokenObtainPairView
 
 schema_view = get_schema_view(
@@ -49,4 +50,5 @@ urlpatterns = [
     path('api/v1.0/', include((v1_0_patterns, 'v1.0'), namespace='v1.0')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('health/', HealthAPIView.as_view(), name='health')
 ]
