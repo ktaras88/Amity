@@ -1,12 +1,23 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.models import Group
+from django import forms
 
-from .models import User, Profile
+from .models import Profile
+User = get_user_model()
+
+
+class UserCreationForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = '__all__'
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
+    add_form = UserCreationForm
+
     list_display = ('id', 'first_name', 'last_name', 'email', 'phone_number', 'avatar', 'is_active', 'is_staff')
     list_display_links = ('id', 'first_name', 'last_name', 'email')
     list_filter = ('is_staff', 'is_active')
@@ -21,7 +32,8 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email',),
+            'fields': ('email', 'first_name', 'last_name', 'phone_number', 'avatar', 'avatar_coord',
+                       'is_active', 'is_staff'),
         }),
     )
 
