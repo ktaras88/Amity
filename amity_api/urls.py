@@ -43,6 +43,7 @@ v1_0_patterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/', include('users.urls')),
     path('communities/', include('communities.urls')),
+    path('buildings/', include('buildings.urls')),
 ]
 
 urlpatterns = [
