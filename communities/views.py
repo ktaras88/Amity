@@ -5,7 +5,6 @@ from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
-from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
@@ -24,12 +23,19 @@ class CommunitiesListAPIPagination(PageNumberPagination):
     page_size_query_param = 'size'
 
 
-class CommunitiesListAPIView(ListAPIView):
-    queryset = Community.objects.annotate(contact_person_name=Concat('contact_person__first_name', Value(' '),
-                                                                     'contact_person__last_name',
-                                                                     output_field=CharField())).all()
-    serializer_class = CommunitiesListSerializer
-    permission_classes = (IsAmityAdministrator, )
+class CommunitiesViewSet(mixins.CreateModelMixin,
+                         mixins.ListModelMixin,
+                         GenericViewSet):
+
+    default_queryset = Community.objects.select_related('contact_person').all()
+
+    serializer_classes = {
+        'list': CommunitiesListSerializer
+    }
+    default_serializer_class = CommunitySerializer
+
+    permission_classes = (IsAmityAdministratorOrSupervisor, )
+
     pagination_class = CommunitiesListAPIPagination
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -38,15 +44,18 @@ class CommunitiesListAPIView(ListAPIView):
     ordering = ['name', 'address', 'state', 'contact_person_name']
     search_fields = ['name', 'state', 'contact_person_name']
 
+    def get_serializer_class(self):
+        return self.serializer_classes.get(self.action, self.default_serializer_class)
 
-class CommunityViewSet(mixins.CreateModelMixin, GenericViewSet):
-    queryset = Community.objects.select_related('contact_person').all()
-    serializer_class = CommunitySerializer
-    permission_classes = (IsAmityAdministratorOrSupervisor, )
+    def get_queryset(self):
+        return Community.objects.annotate(contact_person_name=Concat('contact_person__first_name', Value(' '),
+                                                                     'contact_person__last_name',
+                                                                     output_field=CharField())).all() \
+            if self.action == 'list' else self.default_queryset
 
-    
+
 class SearchPredictionsAPIView(APIView):
-    permission_classes = (IsAmityAdministrator,)
+    permission_classes = (IsAmityAdministrator, )
 
     def get(self, request, *args, **kwargs):
         data_for_search = Community.objects.values('name', 'state').\
