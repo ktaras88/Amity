@@ -52,11 +52,8 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
             query = Community.objects.annotate(contact_person_name=Concat('contact_person__first_name', Value(' '),
                                                                      'contact_person__last_name',
                                                                      output_field=CharField()))
-
-            if self.request.auth['role'] == ProfileRoles.SUPERVISOR:
-                return query.filter(contact_person=self.request.user)
-            else:
-                return query.all()
+            return query.filter(contact_person=self.request.user) if \
+                self.request.auth['role'] == ProfileRoles.SUPERVISOR else query.all()
         return self.default_queryset
 
 
