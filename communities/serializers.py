@@ -36,7 +36,7 @@ class CommunityEditSerializer(CommunitySerializer):
 class CommunityViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
-        fields = ['name', 'description', 'logo', 'logo_coord', 'safety_status']
+        fields = ['name', 'state', 'description', 'logo', 'logo_coord', 'safety_status']
 
 
 class SwitchSafetyLockSerializer(serializers.ModelSerializer):
