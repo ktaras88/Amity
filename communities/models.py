@@ -25,3 +25,6 @@ class Community(models.Model):
         FileExtensionValidator(VALID_EXTENSIONS), validate_size])
     logo_coord = models.JSONField(null=True, blank=True)
     safety_status = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
