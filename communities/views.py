@@ -12,9 +12,11 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor
+from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
+    IsAmityAdministratorOrCommunityContactPerson
 from .models import Community
-from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer
+from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer, \
+    CommunityViewSerializer, CommunityEditSerializer
 
 User = get_user_model()
 
@@ -52,6 +54,21 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
                                                                      'contact_person__last_name',
                                                                      output_field=CharField())).all() \
             if self.action == 'list' else self.default_queryset
+
+
+class CommunityAPIView(generics.RetrieveUpdateAPIView):
+    queryset = Community.objects.select_related('contact_person').all()
+    serializer_class = CommunityViewSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return CommunityEditSerializer
+        return super().get_serializer_class()
+
+    def get_permissions(self):
+        permission_classes = (IsAmityAdministratorOrCommunityContactPerson, ) if self.request.method == 'PUT' \
+            else (IsAmityAdministratorOrSupervisor, )
+        return [permission() for permission in permission_classes]
 
 
 class SearchPredictionsAPIView(APIView):
