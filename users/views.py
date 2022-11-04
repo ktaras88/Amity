@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
@@ -14,6 +16,9 @@ from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenOb
 User = get_user_model()
 
 
+@method_decorator(name='post', decorator=swagger_auto_schema(
+    operation_summary="Sign in. Retrieve access token."
+))
 class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
@@ -22,6 +27,7 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Get new security code to email")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -37,6 +43,7 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Confirm security code")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -55,6 +62,7 @@ class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Create new password")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -67,11 +75,19 @@ class CreateNewPassword(generics.GenericAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change user avatar"
+))
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Retrieve user avatar"
+))
 class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
     permission_classes = (IsOwnerNotForResident, )
+    http_method_names = ["put", "get", "delete"]
 
+    @swagger_auto_schema(operation_summary="Delete user avatar")
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.avatar:
@@ -83,19 +99,37 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
             return Response({'error': 'There is no avatar.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Retrieve user general information"
+))
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change user general information"
+))
 class UserGeneralInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserGeneralInformationSerializer
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
+    http_method_names = ["put", "get"]
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Retrieve user contact information"
+))
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change user contact information"
+))
 class UserContactInformationView(generics.RetrieveUpdateAPIView):
     serializer_class = UserContactInformationSerializer
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
+    http_method_names = ["put", "get"]
 
 
-class UserPasswordInformationView(generics.RetrieveUpdateAPIView):
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change user password"
+))
+class UserPasswordInformationView(generics.UpdateAPIView):
     serializer_class = UserPasswordInformationSerializer
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
+    http_method_names = ["put"]

@@ -2,7 +2,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Value, CharField
 from django.db.models.functions import Concat
+from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
 from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
 from rest_framework.pagination import PageNumberPagination
@@ -23,6 +25,12 @@ class CommunitiesListAPIPagination(PageNumberPagination):
     page_size_query_param = 'size'
 
 
+@method_decorator(name='list', decorator=swagger_auto_schema(
+    operation_summary="List of communities"
+))
+@method_decorator(name='create', decorator=swagger_auto_schema(
+    operation_summary="Create community"
+))
 class CommunitiesViewSet(mixins.CreateModelMixin,
                          mixins.ListModelMixin,
                          GenericViewSet):
@@ -57,6 +65,7 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
 class SearchPredictionsAPIView(APIView):
     permission_classes = (IsAmityAdministrator, )
 
+    @swagger_auto_schema(operation_summary="Search prediction for front end")
     def get(self, request, *args, **kwargs):
         data_for_search = Community.objects.values('name', 'state').\
             annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')).\
@@ -72,6 +81,7 @@ class SearchPredictionsAPIView(APIView):
 class SupervisorDataAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
+    @swagger_auto_schema(operation_summary="Supervisor data for front end")
     def get(self,  request, *args, **kwargs):
         supervisor_data = User.objects.values('email', 'phone_number').\
             annotate(supervisor_name=Concat('first_name', Value('  '), 'last_name'))
@@ -82,18 +92,24 @@ class SupervisorDataAPIView(APIView):
 class StatesListAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
+    @swagger_auto_schema(operation_summary="List of states for frontend")
     def get(self, request, *args, **kwargs):
         return Response({'states_list': dict(US_STATES)})
 
 
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change safety lock status"
+))
 class SwitchSafetyLockAPIView(generics.UpdateAPIView):
     queryset = Community.objects.all()
     permission_classes = (IsAmityAdministratorOrSupervisor, )
     serializer_class = SwitchSafetyLockSerializer
+    http_method_names = ["put"]
 
 
 class HealthAPIView(APIView):
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="For devops. Return status 200")
     def get(self, request, *args, **kwargs):
         return Response(status=status.HTTP_200_OK)
