@@ -10,17 +10,16 @@ from .serializers import CreateBuildingSerializer, ListBuildingSerializer
 
 class BuildingViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet):
     permission_classes = (IsAmityAdministratorOrSupervisor,)
+    queryset = Building.objects.all()
 
     def get_queryset(self):
         pk = self.kwargs['pk']
         if self.action == 'list':
-            queryset = Building.objects.filter(community=pk).annotate(contact_person_name=
+            self.queryset = Building.objects.filter(community=pk).annotate(contact_person_name=
                                                                       Concat('contact_person__first_name', Value(' '),
                                                                              'contact_person__last_name',
                                                                              output_field=CharField()))
-        else:
-            queryset = Building.objects.select_related('contact_person').all()
-        return queryset
+        return self.queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
