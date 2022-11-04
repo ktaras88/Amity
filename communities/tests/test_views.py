@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from communities.models import Community
+from users.choices_types import ProfileRoles
+from users.models import Profile
 
 User = get_user_model()
 
@@ -255,3 +257,35 @@ class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+
+class CommunityAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
+                                              first_name='User1_first', last_name='Last1', role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_user(email='user2@user2.user2', password='user2',
+                                              first_name='User2_first', last_name='Last2', role=ProfileRoles.SUPERVISOR)
+        self.com = Community.objects.create(name='Community name', state='DC', zip_code=1111, address='Community address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.url = reverse('v1.0:communities:communities-detail', args=[self.com.id])
+
+    def test_permission_class_IsAmityAdministratorOrCommunityContactPerson_for_amity_administrator(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user.email, 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_permission_class_IsAmityAdministratorOrCommunityContactPerson_for_supervisor_is_contact_person(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user1.email, 'password': 'user1'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_permission_class_IsAmityAdministratorOrCommunityContactPerson_for_supervisor_is_not_contact_person(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user2.email, 'password': 'user2'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
