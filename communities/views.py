@@ -151,9 +151,9 @@ class CommunityLogoAPIView(RetrieveUpdateDestroyAPIView):
     @swagger_auto_schema(operation_summary="Delete community logo")
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.avatar:
-            instance.avatar.delete()
-            instance.avatar_coord = None
+        if instance.logo:
+            instance.logo.delete()
+            instance.logo_coord = None
             instance.save()
             return Response({'message': 'Community logo removed'}, status=status.HTTP_204_NO_CONTENT)
         else:

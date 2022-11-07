@@ -14,7 +14,7 @@ from .serializers import CreateBuildingSerializer, ListBuildingSerializer
     operation_summary="List of buildings"
 ))
 @method_decorator(name='create', decorator=swagger_auto_schema(
-    operation_summary="Create buildings"
+    operation_summary="Create building"
 ))
 class BuildingViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet):
     permission_classes = (IsAmityAdministratorOrSupervisor,)
