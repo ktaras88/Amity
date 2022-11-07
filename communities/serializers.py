@@ -28,6 +28,17 @@ class CommunitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CommunityEditSerializer(CommunitySerializer):
+    class Meta(CommunitySerializer.Meta):
+        fields = ['name', 'state', 'address', 'phone_number', 'contact_person', 'description', 'logo', 'logo_coord']
+
+
+class CommunityViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = ['name', 'state', 'description', 'logo', 'logo_coord', 'safety_status']
+
+
 class SwitchSafetyLockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community

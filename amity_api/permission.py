@@ -22,3 +22,11 @@ class IsAmityAdministratorOrSupervisor(IsAuthenticated):
     def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         return bool(perm and request.auth['role'] in (ProfileRoles.AMITY_ADMINISTRATOR, ProfileRoles.SUPERVISOR))
+
+
+class IsAmityAdministratorOrCommunityContactPerson(IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        perm = super().has_permission(request, view)
+        return bool(perm and
+                    (request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR or
+                     (request.auth['role'] == ProfileRoles.SUPERVISOR and obj.contact_person.id == request.user.id)))

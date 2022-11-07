@@ -69,10 +69,8 @@ class CreateNewPassword(generics.GenericAPIView):
         user = serializer.validated_data['user']
         user.set_password(serializer.validated_data['password'])
         user.save()
-
         InvitationToken.objects.filter(user_id=user.id).delete()
-
-        return Response(status=status.HTTP_200_OK)
+        return Response({'email': serializer.validated_data['email']}, status=status.HTTP_200_OK)
 
 
 @method_decorator(name='put', decorator=swagger_auto_schema(

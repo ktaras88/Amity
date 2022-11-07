@@ -14,9 +14,12 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor
+from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
+    IsAmityAdministratorOrCommunityContactPerson
+from users.choices_types import ProfileRoles
 from .models import Community
-from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer
+from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer, \
+    CommunityViewSerializer, CommunityEditSerializer
 
 User = get_user_model()
 
@@ -36,14 +39,11 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
                          GenericViewSet):
 
     default_queryset = Community.objects.select_related('contact_person').all()
-
     serializer_classes = {
         'list': CommunitiesListSerializer
     }
     default_serializer_class = CommunitySerializer
-
     permission_classes = (IsAmityAdministratorOrSupervisor, )
-
     pagination_class = CommunitiesListAPIPagination
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -56,10 +56,24 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
         return self.serializer_classes.get(self.action, self.default_serializer_class)
 
     def get_queryset(self):
-        return Community.objects.annotate(contact_person_name=Concat('contact_person__first_name', Value(' '),
+        if self.action == 'list':
+            query = Community.objects.annotate(contact_person_name=Concat('contact_person__first_name', Value(' '),
                                                                      'contact_person__last_name',
-                                                                     output_field=CharField())).all() \
-            if self.action == 'list' else self.default_queryset
+                                                                     output_field=CharField()))
+            return query.filter(contact_person=self.request.user) if \
+                self.request.auth['role'] == ProfileRoles.SUPERVISOR else query.all()
+        return self.default_queryset
+
+
+class CommunityAPIView(generics.RetrieveUpdateAPIView):
+    queryset = Community.objects.select_related('contact_person').all()
+    serializer_class = CommunityViewSerializer
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return CommunityEditSerializer
+        return super().get_serializer_class()
 
 
 class SearchPredictionsAPIView(APIView):
