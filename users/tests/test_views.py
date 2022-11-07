@@ -149,6 +149,12 @@ class CreateNewPasswordTestCase(APITestCase):
         self.user = User.objects.create_user(email='user@user.user')
         self.token = str(InvitationToken.objects.filter(user=self.user).first())
 
+    def test_create_new_password_add_email_field(self):
+        data = {'token': self.token, 'password': 'User-password123', 'confirm_password': 'User-password123'}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], self.user.email)
+
     def test_create_new_password_wrong_token(self):
         data = {'token': 'wrong-token', 'password': 'User-password123', 'confirm_password': 'User-password123'}
         response = self.client.post(self.url, data, format='json')

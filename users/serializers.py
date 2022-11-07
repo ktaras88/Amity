@@ -91,16 +91,17 @@ class CreateNewPasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(min_length=2, write_only=True, required=True)
 
     class Meta:
-        fields = ['password', 'confirm_password']
+        fields = ['password', 'confirm_password', 'email']
 
     def validate(self, attr):
+
         if attr['password'] != attr['confirm_password']:
             raise serializers.ValidationError({'error': "Passwords do not match."})
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
+            attr['email'] = token.user.email
         else:
             raise serializers.ValidationError({'error': "Invalid token."})
-
         try:
             validators.validate_password(password=attr['password'])
         except exceptions.ValidationError as e:
