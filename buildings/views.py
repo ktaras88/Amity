@@ -27,3 +27,7 @@ class BuildingViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, GenericVie
         else:
             serializer_class = CreateBuildingSerializer
         return serializer_class
+
+    def create(self, request, *args, **kwargs):
+        request.data['community_id'] = self.kwargs['pk']
+        return super().create(request, *args, **kwargs)

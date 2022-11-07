@@ -1,22 +1,21 @@
 from localflavor.us.us_states import US_STATES
-from rest_framework import serializers, status
-from rest_framework.response import Response
+from rest_framework import serializers
 
 from communities.models import Community
 from .models import Building
 
 
 class CreateBuildingSerializer(serializers.ModelSerializer):
+    community_id = serializers.IntegerField()
+
     class Meta:
         model = Building
-        fields = ['name', 'state', 'address', 'contact_person', 'phone_number', 'safety_status']
+        fields = ['community_id', 'name', 'state', 'address', 'contact_person', 'phone_number', 'safety_status']
 
-    def create(self, validated_data):
-        if community_id := self.context['view'].kwargs['pk']:
-            validated_data['community'] = Community.objects.filter(id=community_id).first()
-            return Building.objects.create(**validated_data)
-        else:
-            return Response({'error': 'There is no community id.'}, status=status.HTTP_400_BAD_REQUEST)
+    def validate(self, attr):
+        if not Community.objects.filter(id=attr['community_id']).exists():
+            raise serializers.ValidationError({'error': "There is no such community"})
+        return attr
 
 
 class ListBuildingSerializer(serializers.ModelSerializer):
