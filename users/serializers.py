@@ -98,9 +98,9 @@ class CreateNewPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({'error': "Passwords do not match."})
         if token := InvitationToken.objects.filter(key=str(attr['token'])).first():
             attr['user'] = token.user
+            attr['email'] = token.user.email
         else:
             raise serializers.ValidationError({'error': "Invalid token."})
-
         try:
             validators.validate_password(password=attr['password'])
         except exceptions.ValidationError as e:
