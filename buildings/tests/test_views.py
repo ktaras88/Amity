@@ -1,12 +1,12 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from localflavor.us.us_states import US_STATES
 
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from buildings.models import Building
 from communities.models import Community
+from users.choices_types import ProfileRoles
 
 User = get_user_model()
 
@@ -46,6 +46,20 @@ class BuildingViewSetTestCase(APITestCase):
         self.assertEqual(response.data['state'], data['state'])
         self.assertEqual(response.data['address'], data['address'])
         self.assertEqual(response.data['safety_status'], True)
+
+    def test_cant_create_if_you_not_admin_or_supervisor(self):
+        User.objects.create_user(email='user1@user1.user1', password='user1', first_name='User1_first',
+                                 last_name='Last1', role=ProfileRoles.COORDINATOR)
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user1.user1', 'password': 'user1'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        data = {
+            "name": "building_20",
+            "state": "AL",
+            "address": "addressb20",
+        }
+        response = client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_wrong_community_id(self):
         data = {
