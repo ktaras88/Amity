@@ -1,5 +1,7 @@
 from django.db.models import Value, CharField
 from django.db.models.functions import Concat
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
 
@@ -8,6 +10,12 @@ from .models import Building
 from .serializers import CreateBuildingSerializer, ListBuildingSerializer
 
 
+@method_decorator(name='list', decorator=swagger_auto_schema(
+    operation_summary="List of buildings"
+))
+@method_decorator(name='create', decorator=swagger_auto_schema(
+    operation_summary="Create buildings"
+))
 class BuildingViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet):
     permission_classes = (IsAmityAdministratorOrSupervisor,)
     queryset = Building.objects.all()
