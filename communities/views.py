@@ -7,6 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
@@ -19,7 +20,7 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
 from users.choices_types import ProfileRoles
 from .models import Community
 from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer, \
-    CommunityViewSerializer, CommunityEditSerializer
+    CommunityViewSerializer, CommunityEditSerializer, CommunityLogoSerializer
 
 User = get_user_model()
 
@@ -65,6 +66,12 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
         return self.default_queryset
 
 
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Change community data"
+))
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="View community data"
+))
 class CommunityAPIView(generics.RetrieveUpdateAPIView):
     queryset = Community.objects.select_related('contact_person').all()
     serializer_class = CommunityViewSerializer
@@ -127,3 +134,27 @@ class HealthAPIView(APIView):
     @swagger_auto_schema(operation_summary="For devops. Return status 200")
     def get(self, request, *args, **kwargs):
         return Response(status=status.HTTP_200_OK)
+
+
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Upload new community logo"
+))
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="View community logo"
+))
+class CommunityLogoAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Community.objects.all()
+    serializer_class = CommunityLogoSerializer
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+    http_method_names = ["put", "get", "delete"]
+
+    @swagger_auto_schema(operation_summary="Delete community logo")
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.avatar:
+            instance.avatar.delete()
+            instance.avatar_coord = None
+            instance.save()
+            return Response({'message': 'Community logo removed'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'error': 'There is no community logo.'}, status=status.HTTP_400_BAD_REQUEST)

@@ -50,3 +50,8 @@ class SwitchSafetyLockSerializer(serializers.ModelSerializer):
 
         return instance
 
+
+class CommunityLogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = ['logo', 'logo_coord']
