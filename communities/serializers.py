@@ -2,8 +2,10 @@ from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
 from rest_framework import serializers
 
+from buildings.models import Building
 from users.validators import phone_regex
 from .models import Community
+
 User = get_user_model()
 
 
@@ -14,7 +16,6 @@ class CommunitiesListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['id', 'name', 'state', 'address', 'contact_person_name', 'phone_number', 'safety_status']
-
 
     def get_state(self, obj):
         return dict(US_STATES)[obj.state]
@@ -46,7 +47,9 @@ class SwitchSafetyLockSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.safety_status = not instance.safety_status
+        for building in Building.objects.filter(community=instance.id):
+            building.safety_status = instance.safety_status
+            building.save()
         instance.save()
 
         return instance
-

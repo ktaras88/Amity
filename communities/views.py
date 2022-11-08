@@ -116,7 +116,7 @@ class StatesListAPIView(APIView):
 ))
 class SwitchSafetyLockAPIView(generics.UpdateAPIView):
     queryset = Community.objects.all()
-    permission_classes = (IsAmityAdministratorOrSupervisor, )
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = SwitchSafetyLockSerializer
     http_method_names = ["put"]
 

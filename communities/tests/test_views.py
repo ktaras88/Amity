@@ -5,6 +5,7 @@ from localflavor.us.us_states import US_STATES
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
+from buildings.models import Building
 from communities.models import Community
 from users.choices_types import ProfileRoles
 from users.models import Profile
@@ -234,12 +235,18 @@ class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
                                                   first_name='First-super', last_name='Last-super')
         self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             contact_person=self.user, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AL',
+                                              address='address1', contact_person=self.user, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AR',
+                                              address='address2', contact_person=self.user, phone_number=7654321)
         self.url = reverse('v1.0:communities:switch-safety-status', args=[self.com.id])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
     def test_communities_list_switch_safety_status(self):
         response = self.client.put(self.url)
+        self.assertEqual(response.data['safety_status'], Building.objects.get(id=self.build1.id).safety_status)
+        self.assertEqual(response.data['safety_status'], Building.objects.get(id=self.build2.id).safety_status)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['safety_status'], False)
 
