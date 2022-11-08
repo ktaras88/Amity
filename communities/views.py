@@ -76,6 +76,7 @@ class CommunityAPIView(generics.RetrieveUpdateAPIView):
     queryset = Community.objects.select_related('contact_person').all()
     serializer_class = CommunityViewSerializer
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+    http_method_names = ["put", "get"]
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
