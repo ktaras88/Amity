@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'localflavor',
     'django_filters',
+    'corsheaders',
     'users',
     'communities',
     'buildings',
@@ -52,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'amity_api.urls'
@@ -186,3 +189,5 @@ FRONT_END_NEW_PASSWORD_PART = config('FRONT_END_NEW_PASSWORD_PART', default='')
 FRONT_END_NEW_PASSWORD_URL = f'{FRONT_END_DOMAIN_URL}{FRONT_END_NEW_PASSWORD_PART}'
 
 VALID_EXTENSIONS = ['jpg', 'png', 'jpeg']
+
+CORS_ORIGIN_ALLOW_ALL = True
