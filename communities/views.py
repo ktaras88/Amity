@@ -139,5 +139,4 @@ class RecentActivityAPIView(generics.ListAPIView):
     serializer_class = RecentActivitySerializer
 
     def get_queryset(self):
-        return RecentActivity.objects.filter(community=self.kwargs['pk'])
-
+        return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
