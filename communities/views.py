@@ -135,7 +135,7 @@ class HealthAPIView(APIView):
 
 
 class RecentActivityAPIView(generics.ListAPIView):
-    permission_classes = (IsAmityAdministratorOrSupervisor,)
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson,)
     serializer_class = RecentActivitySerializer
 
     def get_queryset(self):
