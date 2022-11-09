@@ -3,7 +3,7 @@ from localflavor.us.us_states import US_STATES
 from rest_framework import serializers
 
 from users.validators import phone_regex
-from .models import Community
+from .models import Community, RecentActivity
 
 User = get_user_model()
 
@@ -43,3 +43,9 @@ class CommunityLogoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['logo', 'logo_coord']
+
+
+class RecentActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecentActivity
+        fields = '__all__'
