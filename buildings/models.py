@@ -3,14 +3,13 @@ from django.db import models
 
 from localflavor.us.models import USStateField
 
-from communities.models import Community
 from users.validators import phone_regex
 
 User = get_user_model()
 
 
 class Building(models.Model):
-    community = models.ForeignKey(Community, on_delete=models.CASCADE)
+    community = models.ForeignKey('communities.Community', on_delete=models.CASCADE)
     name = models.CharField('name', max_length=100)
     state = USStateField('state')
     address = models.CharField('address', max_length=100)

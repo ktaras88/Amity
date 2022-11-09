@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from users.validators import phone_regex
 from .models import Community
+
 User = get_user_model()
 
 
@@ -14,7 +15,6 @@ class CommunitiesListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['id', 'name', 'state', 'address', 'contact_person_name', 'phone_number', 'safety_status']
-
 
     def get_state(self, obj):
         return dict(US_STATES)[obj.state]
@@ -37,18 +37,6 @@ class CommunityViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['name', 'state', 'description', 'logo', 'logo_coord', 'safety_status']
-
-
-class SwitchSafetyLockSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Community
-        fields = ['safety_status']
-
-    def update(self, instance, validated_data):
-        instance.safety_status = not instance.safety_status
-        instance.save()
-
-        return instance
 
 
 class CommunityLogoSerializer(serializers.ModelSerializer):
