@@ -34,3 +34,17 @@ class Community(models.Model):
         self.safety_status = not self.safety_status
         self.save()
         Building.objects.filter(community=self.id).update(safety_status=self.safety_status)
+
+    def create_recent_activity_record(self, user_id):
+        RecentActivity.objects.create(community=self,
+                                      user=user_id,
+                                      activity='safety_status',
+                                      status=self.safety_status)
+
+
+class RecentActivity(models.Model):
+    community = models.ForeignKey(Community, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    switch_time = models.DateTimeField(auto_now_add=True)
+    activity = models.CharField('activity', max_length=15)
+    status = models.BooleanField()

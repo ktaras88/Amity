@@ -17,9 +17,9 @@ from rest_framework.views import APIView
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
     IsAmityAdministratorOrCommunityContactPerson
 from users.choices_types import ProfileRoles
-from .models import Community
+from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
-    CommunityViewSerializer, CommunityEditSerializer
+    CommunityViewSerializer, CommunityEditSerializer, RecentActivitySerializer
 
 User = get_user_model()
 
@@ -122,6 +122,7 @@ class SwitchCommunitySafetyLockAPIView(generics.UpdateAPIView):
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.switch_safety_status()
+        instance.create_recent_activity_record(user_id=self.request.user)
         return Response({'safety_status': instance.safety_status}, status=status.HTTP_200_OK)
 
 
@@ -131,3 +132,12 @@ class HealthAPIView(APIView):
     @swagger_auto_schema(operation_summary="For devops. Return status 200")
     def get(self, request, *args, **kwargs):
         return Response(status=status.HTTP_200_OK)
+
+
+class RecentActivityAPIView(generics.ListAPIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+    serializer_class = RecentActivitySerializer
+
+    def get_queryset(self):
+        return RecentActivity.objects.filter(community=self.kwargs['pk'])
+
