@@ -31,4 +31,6 @@ class Community(models.Model):
         return self.name
 
     def switch_safety_status(self):
-        Building.objects.filter(community=self.id).update(safety_status=not self.safety_status)
+        self.safety_status = not self.safety_status
+        self.save()
+        Building.objects.filter(community=self.id).update(safety_status=self.safety_status)
