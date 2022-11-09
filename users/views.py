@@ -23,13 +23,11 @@ class TokenObtainPairView(SimpleJWTTokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
 
-@method_decorator(name='post', decorator=swagger_auto_schema(
-    operation_summary="Get new security code to email"
-))
 class ResetPasswordRequestEmail(generics.GenericAPIView):
     serializer_class = RequestEmailSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Get new security code to email")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -41,13 +39,11 @@ class ResetPasswordRequestEmail(generics.GenericAPIView):
             return Response({'error': 'There is no account with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(name='post', decorator=swagger_auto_schema(
-    operation_summary="Confirm security code"
-))
 class ResetPasswordSecurityCode(generics.GenericAPIView):
     serializer_class = SecurityCodeSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Confirm security code")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -62,13 +58,11 @@ class ResetPasswordSecurityCode(generics.GenericAPIView):
             return Response({'error': 'There is no user with that email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(name='post', decorator=swagger_auto_schema(
-    operation_summary="Create new password"
-))
 class CreateNewPassword(generics.GenericAPIView):
     serializer_class = CreateNewPasswordSerializer
     permission_classes = (AllowAny, )
 
+    @swagger_auto_schema(operation_summary="Create new password")
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -85,15 +79,13 @@ class CreateNewPassword(generics.GenericAPIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="Retrieve user avatar"
 ))
-@method_decorator(name='delete', decorator=swagger_auto_schema(
-    operation_summary="Delete user avatar"
-))
 class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserAvatarSerializer
     permission_classes = (IsOwnerNotForResident, )
     http_method_names = ["put", "get", "delete"]
 
+    @swagger_auto_schema(operation_summary="Delete user avatar")
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.avatar:

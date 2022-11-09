@@ -1,14 +1,11 @@
-import tempfile
-
-from PIL import Image
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
 
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 
+from buildings.models import Building
 from communities.models import Community
 from users.choices_types import ProfileRoles
 from users.models import Profile
@@ -55,23 +52,23 @@ class CommunitiesListAPIViewTestCase(APITestCase):
     def test_get_search_by_part_of_name(self):
         response = self.client.get(self.url, data={'search': 'com'})
         self.assertEqual(dict(response.data['results'][0]), {'id': self.com1.id, 'name': self.com1.name,
-                                                       'state': dict(US_STATES)[self.com1.state],
-                                                       'address': self.com1.address,
-                                                       'contact_person_name': self.com1.contact_person.get_full_name(),
-                                                       'phone_number': str(self.com1.phone_number),
-                                                       'safety_status': self.com1.safety_status})
+                                                             'state': dict(US_STATES)[self.com1.state],
+                                                             'address': self.com1.address,
+                                                             'contact_person_name': self.com1.contact_person.get_full_name(),
+                                                             'phone_number': str(self.com1.phone_number),
+                                                             'safety_status': self.com1.safety_status})
         self.assertEqual(dict(response.data['results'][1]), {'id': self.com2.id, 'name': self.com2.name,
-                                                       'state': dict(US_STATES)[self.com2.state],
-                                                       'address': self.com2.address,
-                                                       'contact_person_name': self.com2.contact_person.get_full_name(),
-                                                       'phone_number': str(self.com2.phone_number),
-                                                       'safety_status': self.com2.safety_status})
+                                                             'state': dict(US_STATES)[self.com2.state],
+                                                             'address': self.com2.address,
+                                                             'contact_person_name': self.com2.contact_person.get_full_name(),
+                                                             'phone_number': str(self.com2.phone_number),
+                                                             'safety_status': self.com2.safety_status})
         self.assertEqual(dict(response.data['results'][2]), {'id': self.com3.id, 'name': self.com3.name,
-                                                       'state': dict(US_STATES)[self.com3.state],
-                                                       'address': self.com3.address,
-                                                       'contact_person_name': self.com3.contact_person.get_full_name(),
-                                                       'phone_number': str(self.com3.phone_number),
-                                                       'safety_status': self.com3.safety_status})
+                                                             'state': dict(US_STATES)[self.com3.state],
+                                                             'address': self.com3.address,
+                                                             'contact_person_name': self.com3.contact_person.get_full_name(),
+                                                             'phone_number': str(self.com3.phone_number),
+                                                             'safety_status': self.com3.safety_status})
 
     def test_get_search_by_contact_person(self):
         response = self.client.get(self.url, data={'search': 'lastsuper'})
@@ -197,7 +194,6 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
                           {self.com5.__dict__['name']: self.com5.__dict__['address']}]
         self.assertEqual(response_order, expected_order)
 
-
     def test_communities_list_ascending_sort_by_state(self):
         response = self.client.get(self.url + '?ordering=state')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -231,32 +227,41 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(response_order, expected_order)
 
 
-class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
+class CommunitySwitchSafetyStatusTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
                                                   first_name='First-super', last_name='Last-super')
         self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             contact_person=self.user, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
+                                              address='address1', contact_person=self.user, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', contact_person=self.user, phone_number=7654321)
         self.url = reverse('v1.0:communities:switch-safety-status', args=[self.com.id])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-    def test_communities_list_switch_safety_status(self):
+    def test_ensure_that_safety_status_switching_for_communities_and_related_buildings(self):
+        self.assertEqual(self.com.safety_status, True)
+        self.assertEqual(self.build1.safety_status, True)
+        self.assertEqual(self.build2.safety_status, True)
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['safety_status'], False)
+        self.assertEqual(Building.objects.get(id=self.build1.id).safety_status, False)
+        self.assertEqual(Building.objects.get(id=self.build2.id).safety_status, False)
 
-    def test_communities_list_switch_safety_status_by_non_authorised(self):
+    def test_communities_ensure_switch_safety_status_by_non_authorised_not_work(self):
         self.client.force_authenticate(user=None, token=None)
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
 
-    def test_communities_list_switch_safety_status_by_not_admin_or_supervisor(self):
-        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
-                                              first_name='User1_first', last_name='Last1')
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user1.user1', 'password': 'user1'})
+    def test_communities_ensure_switch_safety_status_by_not_admin_or_supervisor_not_work(self):
+        self.user = User.objects.create_user(email='user@user.user', password='user',
+                                             first_name='User_first', last_name='Last')
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user@user.user', 'password': 'user'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -272,7 +277,8 @@ class CommunityAPIViewTestCase(APITestCase):
                                               first_name='User1_first', last_name='Last1', role=ProfileRoles.SUPERVISOR)
         self.user2 = User.objects.create_user(email='user2@user2.user2', password='user2',
                                               first_name='User2_first', last_name='Last2', role=ProfileRoles.SUPERVISOR)
-        self.com = Community.objects.create(name='Community name', state='DC', zip_code=1111, address='Community address',
+        self.com = Community.objects.create(name='Community name', state='DC', zip_code=1111,
+                                            address='Community address',
                                             contact_person=self.user1, phone_number=1230456204, safety_status=True)
         self.url = reverse('v1.0:communities:communities-detail', args=[self.com.id])
 
@@ -295,40 +301,34 @@ class CommunityAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class CommunityLogoAPIViewTestCase(APITestCase):
+class RecentActivityAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(email='user@user.user1', password='M@rkHami11',
-                                              first_name='User_first', last_name='User_last', role=ProfileRoles.SUPERVISOR)
-        self.com = Community.objects.create(name='Community name', state='DC', zip_code=1111, address='Community address',
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             contact_person=self.user, phone_number=1230456204, safety_status=True)
-        self.url = reverse('v1.0:communities:community-logo', args=[self.com.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user.email, 'password': 'M@rkHami11'})
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
+                                              address='address1', contact_person=self.user, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', contact_person=self.user, phone_number=7654321)
+        self.url = reverse('v1.0:communities:recent-activity', args=[self.com.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-        image = Image.new('RGB', (100, 100))
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
-        image.save(tmp_file)
-        tmp_file.seek(0)
-
-        self.data = {'logo': tmp_file, 'logo_coord': 100}
-
-    def test_get_data_for_authenticated_client(self):
+    def test_ensure_there_is_record(self):
         response = self.client.get(self.url)
+        self.assertEqual(response.data['results'], [])
+
+        self.client.put(reverse('v1.0:communities:switch-safety-status', args=[self.com.id]))
+        response1 = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data['results']), 1)
+        self.assertEqual(response1.data['results'][0]['community'], self.com.id)
+        self.assertEqual(response1.data['results'][0]['user'], self.user.id)
+        self.assertEqual(response1.data['results'][0]['status'], Community.objects.get(id=self.com.id).safety_status)
 
-    def test_get_data_for_un_authenticated_client(self):
-        self.client.force_authenticate(user=None, token=None)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_ensure_community_logo_and_coord_recorded(self):
-        response = self.client.put(self.url, self.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['logo'])
-        self.assertTrue(response.data['logo_coord'])
-
-    def test_delete_community_logo_and_coord(self):
-        self.client.put(self.url, self.data)
-        response = self.client.delete(self.url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.client.put(reverse('v1.0:communities:switch-safety-status', args=[self.com.id]))
+        response2 = self.client.get(self.url)
+        self.assertEqual(len(response2.data['results']), 2)
+        self.assertEqual(response2.data['results'][1]['status'], self.com.safety_status)
