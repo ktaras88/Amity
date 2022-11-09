@@ -84,10 +84,12 @@ class CommunityAPIView(generics.RetrieveUpdateAPIView):
         return super().get_serializer_class()
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Search prediction for front end"
+))
 class SearchPredictionsAPIView(APIView):
     permission_classes = (IsAmityAdministrator, )
 
-    @swagger_auto_schema(operation_summary="Search prediction for front end")
     def get(self, request, *args, **kwargs):
         data_for_search = Community.objects.values('name', 'state').\
             annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')).\
@@ -100,10 +102,12 @@ class SearchPredictionsAPIView(APIView):
         return Response({'search_list': search_list})
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Supervisor data for front end"
+))
 class SupervisorDataAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
-    @swagger_auto_schema(operation_summary="Supervisor data for front end")
     def get(self,  request, *args, **kwargs):
         supervisor_data = User.objects.values('email', 'phone_number').\
             annotate(supervisor_name=Concat('first_name', Value('  '), 'last_name'))
@@ -111,10 +115,12 @@ class SupervisorDataAPIView(APIView):
         return Response({'supervisor_data': list(supervisor_data)})
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="List of states for frontend"
+))
 class StatesListAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor, )
 
-    @swagger_auto_schema(operation_summary="List of states for frontend")
     def get(self, request, *args, **kwargs):
         return Response({'states_list': dict(US_STATES)})
 
@@ -129,10 +135,12 @@ class SwitchSafetyLockAPIView(generics.UpdateAPIView):
     http_method_names = ["put"]
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="For devops. Return status 200"
+))
 class HealthAPIView(APIView):
     permission_classes = (AllowAny, )
 
-    @swagger_auto_schema(operation_summary="For devops. Return status 200")
     def get(self, request, *args, **kwargs):
         return Response(status=status.HTTP_200_OK)
 
@@ -143,13 +151,15 @@ class HealthAPIView(APIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="View community logo"
 ))
+@method_decorator(name='delete', decorator=swagger_auto_schema(
+    operation_summary="Delete community logo"
+))
 class CommunityLogoAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Community.objects.all()
     serializer_class = CommunityLogoSerializer
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     http_method_names = ["put", "get", "delete"]
 
-    @swagger_auto_schema(operation_summary="Delete community logo")
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.logo:
