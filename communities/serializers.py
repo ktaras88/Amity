@@ -44,12 +44,3 @@ class SwitchSafetyLockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['safety_status']
-
-    def update(self, instance, validated_data):
-        instance.safety_status = not instance.safety_status
-        for building in Building.objects.filter(community=instance.id):
-            building.safety_status = instance.safety_status
-            building.save()
-        instance.save()
-
-        return instance

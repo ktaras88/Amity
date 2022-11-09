@@ -235,9 +235,9 @@ class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
                                                   first_name='First-super', last_name='Last-super')
         self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             contact_person=self.user, phone_number=1230456204, safety_status=True)
-        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AL',
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
                                               address='address1', contact_person=self.user, phone_number=1234567)
-        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AR',
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
                                               address='address2', contact_person=self.user, phone_number=7654321)
         self.url = reverse('v1.0:communities:switch-safety-status', args=[self.com.id])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})

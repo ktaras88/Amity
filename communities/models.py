@@ -5,6 +5,7 @@ from django.db import models
 from localflavor.us.models import USStateField
 
 from amity_api.settings import VALID_EXTENSIONS
+from buildings.models import Building
 from users.validators import phone_regex, validate_size
 
 User = get_user_model()
@@ -28,3 +29,6 @@ class Community(models.Model):
 
     def __str__(self):
         return self.name
+
+    def switch_safety_status(self):
+        Building.objects.filter(community=self.id).update(safety_status=not self.safety_status)

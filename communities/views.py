@@ -120,6 +120,14 @@ class SwitchSafetyLockAPIView(generics.UpdateAPIView):
     serializer_class = SwitchSafetyLockSerializer
     http_method_names = ["put"]
 
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.safety_status = not instance.safety_status
+        instance.switch_safety_status()
+        instance.save()
+
+        return Response(status=status.HTTP_200_OK)
+
 
 class HealthAPIView(APIView):
     permission_classes = (AllowAny, )
