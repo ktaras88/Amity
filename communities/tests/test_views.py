@@ -227,39 +227,7 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(response_order, expected_order)
 
 
-class CommunitiesListAPIViewSwitchSafetyStatusTestCase(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
-                                                  first_name='First-super', last_name='Last-super')
-        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
-                                            contact_person=self.user, phone_number=1230456204, safety_status=True)
-        self.url = reverse('v1.0:communities:switch-safety-status', args=[self.com.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-
-    def test_ensure_switch_safety_status_for_community_works_correctly(self):
-        response = self.client.put(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['safety_status'], False)
-
-    def test_ensure_switch_safety_status_for_community_by_non_authorised_not_work(self):
-        self.client.force_authenticate(user=None, token=None)
-        response = self.client.put(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
-
-    def test_ensure_switch_safety_status_for_community_by_not_admin_or_supervisor_not_work(self):
-        self.user1 = User.objects.create_user(email='user1@user1.user1', password='user1',
-                                              first_name='User1_first', last_name='Last1')
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user1.user1', 'password': 'user1'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        response = self.client.put(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
-
-
-class CommunityDetailedPageTestCase(APITestCase):
+class CommunitySwitchSafetyStatusTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
@@ -284,13 +252,13 @@ class CommunityDetailedPageTestCase(APITestCase):
         self.assertEqual(Building.objects.get(id=self.build1.id).safety_status, False)
         self.assertEqual(Building.objects.get(id=self.build2.id).safety_status, False)
 
-    def test_communities_detailed_page_ensure_switch_safety_status_by_non_authorised_not_work(self):
+    def test_communities_ensure_switch_safety_status_by_non_authorised_not_work(self):
         self.client.force_authenticate(user=None, token=None)
         response = self.client.put(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
 
-    def test_communities_detailed_page_ensure_switch_safety_status_by_not_admin_or_supervisor_not_work(self):
+    def test_communities_ensure_switch_safety_status_by_not_admin_or_supervisor_not_work(self):
         self.user = User.objects.create_user(email='user@user.user', password='user',
                                              first_name='User_first', last_name='Last')
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user@user.user', 'password': 'user'})
