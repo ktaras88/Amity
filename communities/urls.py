@@ -1,13 +1,14 @@
 from django.urls import path
 
 from .views import SearchPredictionsAPIView, SupervisorDataAPIView, \
-    StatesListAPIView, SwitchSafetyLockAPIView, CommunitiesViewSet, CommunityAPIView
+    StatesListAPIView, SwitchSafetyLockAPIView, CommunitiesViewSet, CommunityAPIView, CommunityLogoAPIView
 
 app_name = 'communities'
 
 urlpatterns = [
     path('', CommunitiesViewSet.as_view({'post': 'create', 'get': 'list'}), name='communities-list'),
     path('<int:pk>/', CommunityAPIView.as_view(), name='communities-detail'),
+    path('<int:pk>/logo/', CommunityLogoAPIView.as_view(), name='community-logo'),
     path('search-predictions/', SearchPredictionsAPIView.as_view(), name='search-predictions'),
     path('supervisor-data/', SupervisorDataAPIView.as_view(), name='supervisor-data'),
     path('states/', StatesListAPIView.as_view(), name='states-list'),
