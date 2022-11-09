@@ -35,16 +35,20 @@ class Community(models.Model):
         self.save()
         Building.objects.filter(community=self.id).update(safety_status=self.safety_status)
 
-    def create_recent_activity_record(self, user_id):
+    def create_recent_activity_record(self, user_id, activity):
         RecentActivity.objects.create(community=self,
-                                      user=user_id,
-                                      activity='safety_status',
+                                      user_id=user_id,
+                                      activity=activity,
                                       status=self.safety_status)
 
 
 class RecentActivity(models.Model):
+    SAFETY_STATUS = 1
+    MASTER_OFF = 2
+    ACTIVITY_CHOICES = ((SAFETY_STATUS, "safety_status"), (MASTER_OFF, "master_off"),)
+
     community = models.ForeignKey(Community, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     switch_time = models.DateTimeField(auto_now_add=True)
-    activity = models.CharField('activity', max_length=15)
+    activity = models.CharField('activity', choices=ACTIVITY_CHOICES, max_length=15)
     status = models.BooleanField()

@@ -321,8 +321,14 @@ class RecentActivityAPIViewTestCase(APITestCase):
         self.assertEqual(response.data['results'], [])
 
         self.client.put(reverse('v1.0:communities:switch-safety-status', args=[self.com.id]))
-        response = self.client.get(self.url)
+        response1 = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['community'], self.com.id)
-        self.assertEqual(response.data['results'][0]['user'], self.user.id)
-        self.assertEqual(response.data['results'][0]['status'], Community.objects.get(id=self.com.id).safety_status)
+        self.assertEqual(len(response1.data['results']), 1)
+        self.assertEqual(response1.data['results'][0]['community'], self.com.id)
+        self.assertEqual(response1.data['results'][0]['user'], self.user.id)
+        self.assertEqual(response1.data['results'][0]['status'], Community.objects.get(id=self.com.id).safety_status)
+
+        self.client.put(reverse('v1.0:communities:switch-safety-status', args=[self.com.id]))
+        response2 = self.client.get(self.url)
+        self.assertEqual(len(response2.data['results']), 2)
+        self.assertEqual(response2.data['results'][1]['status'], self.com.safety_status)

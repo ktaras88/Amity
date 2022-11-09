@@ -122,7 +122,7 @@ class SwitchCommunitySafetyLockAPIView(generics.UpdateAPIView):
     def put(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.switch_safety_status()
-        instance.create_recent_activity_record(user_id=self.request.user)
+        instance.create_recent_activity_record(user_id=self.request.user.id, activity=RecentActivity.SAFETY_STATUS)
         return Response({'safety_status': instance.safety_status}, status=status.HTTP_200_OK)
 
 
