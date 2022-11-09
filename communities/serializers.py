@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
 from rest_framework import serializers
 
-from buildings.models import Building
 from users.validators import phone_regex
 from .models import Community
 
@@ -44,3 +43,9 @@ class SwitchSafetyLockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['safety_status']
+
+
+class CommunityLogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = ['logo', 'logo_coord']
