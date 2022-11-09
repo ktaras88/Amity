@@ -18,7 +18,7 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
     IsAmityAdministratorOrCommunityContactPerson
 from users.choices_types import ProfileRoles
 from .models import Community
-from .serializers import CommunitiesListSerializer, CommunitySerializer, SwitchSafetyLockSerializer, \
+from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityEditSerializer
 
 User = get_user_model()
@@ -114,15 +114,15 @@ class StatesListAPIView(APIView):
 @method_decorator(name='put', decorator=swagger_auto_schema(
     operation_summary="Change safety lock status"
 ))
-class SwitchSafetyLockAPIView(generics.UpdateAPIView):
+class SwitchCommunitySafetyLockAPIView(generics.UpdateAPIView):
     queryset = Community.objects.all()
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
-    serializer_class = SwitchSafetyLockSerializer
     http_method_names = ["put"]
 
     def put(self, request, *args, **kwargs):
-        self.get_object().switch_safety_status()
-        return Response(status=status.HTTP_200_OK)
+        instance = self.get_object()
+        instance.switch_safety_status()
+        return Response({'safety_status': instance.safety_status}, status=status.HTTP_200_OK)
 
 
 class HealthAPIView(APIView):

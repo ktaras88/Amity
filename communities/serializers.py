@@ -39,12 +39,6 @@ class CommunityViewSerializer(serializers.ModelSerializer):
         fields = ['name', 'state', 'description', 'logo', 'logo_coord', 'safety_status']
 
 
-class SwitchSafetyLockSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Community
-        fields = ['safety_status']
-
-
 class CommunityLogoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
