@@ -375,3 +375,41 @@ class RecentActivityAPIViewTestCase(APITestCase):
         response2 = self.client.get(self.url)
         self.assertEqual(len(response2.data['results']), 2)
         self.assertEqual(response2.data['results'][1]['status'], self.com.safety_status)
+
+
+class CommunityMembersViewSetTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_superuser(email='user1@user.user', password='strong',
+                                                  first_name='First-user1', last_name='Last-user1',
+                                                   phone_number=7654321, role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_superuser(email='user2@user.user', password='strong',
+                                                  first_name='First-user2', last_name='Last-user2',
+                                                   role=ProfileRoles.COORDINATOR)
+        self.user3 = User.objects.create_superuser(email='user3@user.user', password='strong',
+                                                  first_name='First-user3', last_name='Last-user3',
+                                                   role=ProfileRoles.COORDINATOR)
+        self.user4 = User.objects.create_superuser(email='user4@user.user', password='strong',
+                                                  first_name='First-user4', last_name='Last-user4',
+                                                   role=ProfileRoles.COORDINATOR)
+        self.user5 = User.objects.create_superuser(email='user5@user.user', password='strong',
+                                                  first_name='First-user5', last_name='Last-user5',
+                                                   role=ProfileRoles.COORDINATOR, is_active=False)
+        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
+                                              address='address1', contact_person=self.user2, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', contact_person=self.user3, phone_number=7654321)
+        self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
+                                              address='address3', contact_person=self.user5, phone_number=7654321)
+        self.url = reverse('v1.0:communities:communities-members-list', args=[self.com.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_community_members_list(self):
+        response = self.client.get(self.url)
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

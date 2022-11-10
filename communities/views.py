@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, CharField
+from django.db.models import Value, CharField, F
 from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,10 +17,13 @@ from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
     IsAmityAdministratorOrCommunityContactPerson
+from buildings.models import Building
 from users.choices_types import ProfileRoles
+from users.models import Profile
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
-    CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer
+    CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
+    CommunityMembersListSerializer
 
 User = get_user_model()
 
@@ -184,3 +187,42 @@ class RecentActivityAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="View list of communities members"
+))
+class CommunityMembersListAPIView(generics.ListAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+    serializer_class = CommunityMembersListSerializer
+    pagination_class = CommunitiesListAPIPagination
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        queryset = Community.objects.values(
+            id_user=F('contact_person__id'),
+            avatar=F('contact_person__avatar'),
+            avatar_coord=F('contact_person__avatar_coord'),
+            full_name=Concat('contact_person__first_name',
+                             Value(' '),
+                             'contact_person__last_name',
+                             output_field=CharField()),
+            role_id=F('contact_person__profile__role'),
+            user_phone_number=F('contact_person__phone_number'),
+            building_name=Value('All buildings'),
+            is_active=F('contact_person__is_active')).filter(id=pk). \
+            union(Building.objects.values(
+            id_user=F('contact_person__id'),
+            avatar=F('contact_person__avatar'),
+            avatar_coord=F('contact_person__avatar_coord'),
+            full_name=Concat('contact_person__first_name',
+                             Value(' '),
+                             'contact_person__last_name',
+                             output_field=CharField()),
+            role_id=F('contact_person__profile__role'),
+            user_phone_number=F('contact_person__phone_number'),
+            building_name=F('name'),
+            is_active=F('contact_person__is_active')).filter(community=pk))
+
+        return queryset
