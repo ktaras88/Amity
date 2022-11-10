@@ -1,3 +1,5 @@
+import tempfile
+from PIL import Image
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
@@ -8,7 +10,7 @@ from rest_framework.test import APITestCase, APIClient
 from buildings.models import Building
 from communities.models import Community
 from users.choices_types import ProfileRoles
-from users.models import Profile
+
 
 User = get_user_model()
 
@@ -299,6 +301,47 @@ class CommunityAPIViewTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class CommunityLogoAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='user@user.user1', password='M@rkHami11',
+                                             first_name='User_first', last_name='User_last',
+                                             role=ProfileRoles.SUPERVISOR)
+        self.com = Community.objects.create(name='Community name', state='DC', zip_code=1111,
+                                            address='Community address',
+                                            contact_person=self.user, phone_number=1230456204, safety_status=True)
+        self.url = reverse('v1.0:communities:community-logo', args=[self.com.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user.email, 'password': 'M@rkHami11'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        image = Image.new('RGB', (100, 100))
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
+        image.save(tmp_file)
+        tmp_file.seek(0)
+
+        self.data = {'logo': tmp_file, 'logo_coord': 100}
+
+    def test_get_data_for_authenticated_client(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_data_for_un_authenticated_client(self):
+        self.client.force_authenticate(user=None, token=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_ensure_community_logo_and_coord_recorded(self):
+        response = self.client.put(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['logo'])
+        self.assertTrue(response.data['logo_coord'])
+
+    def test_delete_community_logo_and_coord(self):
+        self.client.put(self.url, self.data)
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class RecentActivityAPIViewTestCase(APITestCase):
