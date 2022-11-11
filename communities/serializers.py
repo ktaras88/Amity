@@ -53,15 +53,15 @@ class RecentActivitySerializer(serializers.ModelSerializer):
 
 
 class CommunityMembersListSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='id_user')
-    phone_number = serializers.CharField(source='user_phone_number')
+    # id = serializers.IntegerField(source='id_user')
+    # phone_number = serializers.CharField(source='user_phone_number')
     role = serializers.SerializerMethodField()
     full_name = serializers.CharField()
     building_name = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ['id', 'avatar', 'avatar_coord', 'role', 'phone_number', 'full_name', 'building_name']
+        fields = ['id', 'avatar', 'avatar_coord', 'role', 'phone_number', 'full_name', 'building_name', 'is_active']
 
     def get_role(self, obj):
         return dict(ProfileRoles.CHOICES)[obj['role_id']]

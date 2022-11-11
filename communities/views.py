@@ -19,17 +19,12 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
     IsAmityAdministratorOrCommunityContactPerson
 from buildings.models import Building
 from users.choices_types import ProfileRoles
-from users.models import Profile
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
     CommunityMembersListSerializer
 
 User = get_user_model()
-
-
-class CommunitiesListAPIPagination(PageNumberPagination):
-    page_size_query_param = 'size'
 
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
@@ -47,7 +42,6 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
     }
     default_serializer_class = CommunitySerializer
     permission_classes = (IsAmityAdministratorOrSupervisor,)
-    pagination_class = CommunitiesListAPIPagination
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_fields = ['safety_status']
@@ -196,33 +190,22 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
-    pagination_class = CommunitiesListAPIPagination
 
     def get_queryset(self):
         pk = self.kwargs['pk']
-        queryset = Community.objects.values(
-            id_user=F('contact_person__id'),
-            avatar=F('contact_person__avatar'),
-            avatar_coord=F('contact_person__avatar_coord'),
-            full_name=Concat('contact_person__first_name',
-                             Value(' '),
-                             'contact_person__last_name',
-                             output_field=CharField()),
+
+        community_contact_person = User.objects.filter(communities__id=pk).values(
+            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active',
+            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
             role_id=Value(ProfileRoles.SUPERVISOR),
-            user_phone_number=F('contact_person__phone_number'),
-            building_name=Value('All buildings'),
-            is_active=F('contact_person__is_active')).filter(id=pk, contact_person__id__isnull=False). \
-            union(Building.objects.values(
-            id_user=F('contact_person__id'),
-            avatar=F('contact_person__avatar'),
-            avatar_coord=F('contact_person__avatar_coord'),
-            full_name=Concat('contact_person__first_name',
-                             Value(' '),
-                             'contact_person__last_name',
-                             output_field=CharField()),
-            role_id=Value(ProfileRoles.COORDINATOR),
-            user_phone_number=F('contact_person__phone_number'),
-            building_name=F('name'),
-            is_active=F('contact_person__is_active')).filter(community=pk, contact_person__id__isnull=False))
+            building_name=Value('Managing all buildings'))
+
+        buildings_contact_persons = User.objects.filter(buildings__community__id=pk).values(
+            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active',
+            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
+            role_id=Value(ProfileRoles.COORDINATOR)
+        ).annotate(building_name=F('buildings__name'))
+
+        queryset = community_contact_person.union(buildings_contact_persons)
 
         return queryset
