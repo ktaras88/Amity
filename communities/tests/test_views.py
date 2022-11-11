@@ -399,11 +399,15 @@ class CommunityMembersViewSetTestCase(APITestCase):
                                                    role=ProfileRoles.COORDINATOR, is_active=False)
         self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.com2 = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
         self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
                                               address='address1', contact_person=self.user2, phone_number=1234567)
         self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
                                               address='address2', contact_person=self.user3, phone_number=7654321)
-        self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
+        self.build3 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', phone_number=7654321)
+        self.build4 = Building.objects.create(community_id=self.com2.id, name='building4', state='DC',
                                               address='address3', contact_person=self.user5, phone_number=7654321)
         self.url = reverse('v1.0:communities:communities-members-list', args=[self.com.id])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
@@ -411,5 +415,5 @@ class CommunityMembersViewSetTestCase(APITestCase):
 
     def test_community_members_list(self):
         response = self.client.get(self.url)
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 3)
