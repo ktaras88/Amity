@@ -138,7 +138,7 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(response.data['count'], 5)
 
     def test_communities_list_custom_pagination_size_query_param(self):
-        response = self.client.get(self.url + '?size=2')
+        response = self.client.get(self.url + '?limit=2')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)
 
@@ -153,7 +153,7 @@ class CommunitiesListAPIViewFilterTestCase(APITestCase):
         self.assertEqual(response.data['count'], 3)
 
     def test_communities_list_custom_pagination_size_query_param_with_filter_safety_of_only(self):
-        response = self.client.get(self.url + '?size=2&safety_status=false')
+        response = self.client.get(self.url + '?limit=2&safety_status=false')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['count'], 3)

@@ -191,21 +191,28 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
+    filter_backends = [SearchFilter]
+    # filterset_fields = ['safety_status']
+    # ordering_fields = ['name', 'address', 'state', 'contact_person_name']
+    # ordering = ['name', 'address', 'state', 'contact_person_name']
+    # search_fields = ['full_name']
+
     def get_queryset(self):
         pk = self.kwargs['pk']
 
+        general_values = ('id', 'avatar', 'avatar_coord', 'phone_number', 'is_active')
+        general_expressions = {'full_name': Concat('first_name', Value(' '), 'last_name', output_field=CharField())}
+
         community_contact_person = User.objects.filter(communities__id=pk).values(
-            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active',
-            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
+            *general_values, **general_expressions,
             role_id=Value(ProfileRoles.SUPERVISOR),
             building_name=Value('Managing all buildings'))
 
         buildings_contact_persons = User.objects.filter(buildings__community__id=pk).values(
-            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active',
-            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
+            *general_values, **general_expressions,
             role_id=Value(ProfileRoles.COORDINATOR)
         ).annotate(building_name=F('buildings__name'))
 
-        queryset = community_contact_person | buildings_contact_persons
+        queryset = community_contact_person.union(buildings_contact_persons).order_by('-id')
 
         return queryset
