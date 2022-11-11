@@ -8,7 +8,6 @@ from drf_yasg.utils import swagger_auto_schema
 from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
@@ -17,7 +16,6 @@ from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
     IsAmityAdministratorOrCommunityContactPerson
-from buildings.models import Building
 from users.choices_types import ProfileRoles
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
