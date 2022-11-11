@@ -192,11 +192,9 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     def get_queryset(self):
         pk = self.kwargs['pk']
 
-        general_values = ('id', 'avatar', 'avatar_coord', 'phone_number', 'is_active')
-        general_expressions = {'full_name': Concat('first_name', Value(' '), 'last_name', output_field=CharField())}
-
         queryset = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).values(
-            *general_values, **general_expressions,).annotate(
+            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active').annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
             role_id=Case(
                 When(buildings__id__isnull=True, then=Value(ProfileRoles.SUPERVISOR)),
                 default=Value(ProfileRoles.COORDINATOR),
