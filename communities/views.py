@@ -184,7 +184,7 @@ class RecentActivityAPIView(generics.ListAPIView):
 
 
 @method_decorator(name='get', decorator=swagger_auto_schema(
-    operation_summary="View list of communities members"
+    operation_summary="View list of community members"
 ))
 class CommunityMembersListAPIView(generics.ListAPIView):
     queryset = User.objects.all()
@@ -206,6 +206,6 @@ class CommunityMembersListAPIView(generics.ListAPIView):
             role_id=Value(ProfileRoles.COORDINATOR)
         ).annotate(building_name=F('buildings__name'))
 
-        queryset = community_contact_person.union(buildings_contact_persons)
+        queryset = community_contact_person | buildings_contact_persons
 
         return queryset

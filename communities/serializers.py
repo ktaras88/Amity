@@ -53,8 +53,6 @@ class RecentActivitySerializer(serializers.ModelSerializer):
 
 
 class CommunityMembersListSerializer(serializers.ModelSerializer):
-    # id = serializers.IntegerField(source='id_user')
-    # phone_number = serializers.CharField(source='user_phone_number')
     role = serializers.SerializerMethodField()
     full_name = serializers.CharField()
     building_name = serializers.CharField()

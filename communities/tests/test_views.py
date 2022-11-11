@@ -410,10 +410,38 @@ class CommunityMembersViewSetTestCase(APITestCase):
         self.build4 = Building.objects.create(community_id=self.com2.id, name='building4', state='DC',
                                               address='address3', contact_person=self.user5, phone_number=7654321)
         self.url = reverse('v1.0:communities:communities-members-list', args=[self.com.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user.email, 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-    def test_community_members_list(self):
+    def test_community_members_list_permission_for_amity_administrator(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_community_members_list_permission_for_user_is_contact_person_of_community(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user1.email, 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_community_members_list_permission_for_user_is_not_contact_person_of_community(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': self.user2.email, 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_community_members_list_count_results(self):
+        response = self.client.get(self.url + '?limit=1')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 3)
+
+    def test_community_members_list_custom_limit_size(self):
+        response = self.client.get(self.url + '?limit=1')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['next'])
+        self.assertEqual(len(response.data['results']), 1)
+
+    def test_community_members_list_custom_previous_page(self):
+        response = self.client.get(self.url + '?limit=1&offset=1&page=2')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['previous'])
