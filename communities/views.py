@@ -208,7 +208,7 @@ class CommunityMembersListAPIView(generics.ListAPIView):
                              Value(' '),
                              'contact_person__last_name',
                              output_field=CharField()),
-            role_id=F('contact_person__profile__role'),
+            role_id=Value(ProfileRoles.SUPERVISOR),
             user_phone_number=F('contact_person__phone_number'),
             building_name=Value('All buildings'),
             is_active=F('contact_person__is_active')).filter(id=pk, contact_person__id__isnull=False). \
@@ -220,7 +220,7 @@ class CommunityMembersListAPIView(generics.ListAPIView):
                              Value(' '),
                              'contact_person__last_name',
                              output_field=CharField()),
-            role_id=F('contact_person__profile__role'),
+            role_id=Value(ProfileRoles.COORDINATOR),
             user_phone_number=F('contact_person__phone_number'),
             building_name=F('name'),
             is_active=F('contact_person__is_active')).filter(community=pk, contact_person__id__isnull=False))
