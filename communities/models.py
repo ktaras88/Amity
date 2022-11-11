@@ -19,7 +19,7 @@ class Community(models.Model):
     state = USStateField('state')
     zip_code = models.IntegerField('zip_code')
     address = models.CharField('address', max_length=100)
-    contact_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    contact_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='communities')
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20)
     description = models.CharField('description', max_length=100, null=True, blank=True)
     logo = models.ImageField('community logo', null=True, blank=True, upload_to=file_path, validators=[

@@ -31,7 +31,7 @@ class IsAmityAdministratorOrCommunityContactPerson(IsAuthenticated):
                     (request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR or
                      (request.auth['role'] == ProfileRoles.SUPERVISOR and obj.contact_person.id == request.user.id)))
 
-    def has_permission(self, request, view):
+   def has_permission(self, request, view):
         perm = super().has_permission(request, view)
         community_contact_person_permision = Community.objects.filter(id=view.kwargs.get('pk'), contact_person__id=request.user.id).exists()
         return bool(perm and (request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR or

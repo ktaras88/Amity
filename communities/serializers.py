@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
 from rest_framework import serializers
 
+from users.choices_types import ProfileRoles
 from users.validators import phone_regex
 from .models import Community, RecentActivity
 
@@ -49,3 +50,16 @@ class RecentActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = RecentActivity
         fields = '__all__'
+
+
+class CommunityMembersListSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    full_name = serializers.CharField()
+    building_name = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'avatar', 'avatar_coord', 'role', 'phone_number', 'full_name', 'building_name', 'is_active']
+
+    def get_role(self, obj):
+        return dict(ProfileRoles.CHOICES)[obj['role_id']]

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, CharField
+from django.db.models import Value, CharField, F, Q, Case, When
 from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -8,7 +8,6 @@ from drf_yasg.utils import swagger_auto_schema
 from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
@@ -20,13 +19,10 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
 from users.choices_types import ProfileRoles
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
-    CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer
+    CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
+    CommunityMembersListSerializer
 
 User = get_user_model()
-
-
-class CommunitiesListAPIPagination(PageNumberPagination):
-    page_size_query_param = 'size'
 
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
@@ -44,7 +40,6 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
     }
     default_serializer_class = CommunitySerializer
     permission_classes = (IsAmityAdministratorOrSupervisor,)
-    pagination_class = CommunitiesListAPIPagination
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_fields = ['safety_status']
@@ -184,3 +179,32 @@ class RecentActivityAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="View list of community members"
+))
+class CommunityMembersListAPIView(generics.ListAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+    serializer_class = CommunityMembersListSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+
+        queryset = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).values(
+            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active').annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
+            role_id=Case(
+                When(buildings__id__isnull=True, then=Value(ProfileRoles.SUPERVISOR)),
+                default=Value(ProfileRoles.COORDINATOR),
+                output_field=CharField(),
+            ),
+            building_name=Case(
+                When(buildings__id__isnull=True, then=Value('Managing all buildings')),
+                default=F('buildings__name'),
+                output_field=CharField(),
+            ),
+        )
+
+        return queryset
