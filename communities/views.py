@@ -189,6 +189,9 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
+    filter_backends = [SearchFilter]
+    search_fields = ['full_name']
+
     def get_queryset(self):
         pk = self.kwargs['pk']
 
@@ -208,3 +211,16 @@ class CommunityMembersListAPIView(generics.ListAPIView):
         )
 
         return queryset
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Members search prediction for front end"
+))
+class MembersSearchPredictionsAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request, *args, **kwargs):
+        data_for_search = User.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
+                                       aggregate(full_names=ArrayAgg('full_name', distinct=True))
+        members_search_list = set(data_for_search['full_names'])
+        return Response({'members_search_list': members_search_list})

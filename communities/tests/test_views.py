@@ -445,3 +445,73 @@ class CommunityMembersViewSetTestCase(APITestCase):
         response = self.client.get(self.url + '?limit=1&offset=1&page=2')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['previous'])
+
+
+class SearchCommunityMembersListAPIView(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user1@user1.user1', password='M@rkHami11',
+                                              first_name='AAA', last_name='AAA',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_user(email='user2@user2.user1', password='M@rkHami211',
+                                              first_name='AAB', last_name='BBB',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user3 = User.objects.create_user(email='user3@user3.user1', password='M@rkHami311',
+                                              first_name='ABB', last_name='AAB',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user4 = User.objects.create_user(email='user4@user4.user1', password='M@rkHami411',
+                                              first_name='BBB', last_name='BBB',
+                                              role=ProfileRoles.COORDINATOR)
+        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', contact_person=self.user2, phone_number=7654321)
+        self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
+                                              address='address3', contact_person=self.user3, phone_number=7654321)
+        self.build4 = Building.objects.create(community_id=self.com.id, name='building4', state='DC',
+                                              address='address4', contact_person=self.user4, phone_number=7654321)
+        self.url = reverse('v1.0:communities:communities-members-list', args=[self.com.id])
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_get_search_by_full_name(self):
+        response = self.client.get(self.url, data={'search': 'AAA AAA'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(dict(response.data['results'][0]), {'id': self.user1.id, 'avatar': None,
+                                                             'avatar_coord': self.user1.avatar_coord,
+                                                             'role': dict(ProfileRoles.CHOICES)[3],
+                                                             'phone_number': self.user1.phone_number,
+                                                             'full_name': self.user1.get_full_name(),
+                                                             'building_name': self.build1.name,
+                                                             'is_active': self.user1.is_active})
+
+        response1 = self.client.get(self.url, data={'search': 'AB'})
+        self.assertEqual(response1.data['count'], 2)
+        self.assertEqual(dict(response1.data['results'][0]), {'id': self.user2.id, 'avatar': None,
+                                                              'avatar_coord': self.user2.avatar_coord,
+                                                              'role': dict(ProfileRoles.CHOICES)[3],
+                                                              'phone_number': self.user2.phone_number,
+                                                              'full_name': self.user2.get_full_name(),
+                                                              'building_name': self.build2.name,
+                                                              'is_active': self.user3.is_active})
+        self.assertEqual(dict(response1.data['results'][1]), {'id': self.user3.id, 'avatar': None,
+                                                              'avatar_coord': self.user3.avatar_coord,
+                                                              'role': dict(ProfileRoles.CHOICES)[3],
+                                                              'phone_number': self.user3.phone_number,
+                                                              'full_name': self.user3.get_full_name(),
+                                                              'building_name': self.build3.name,
+                                                              'is_active': self.user3.is_active})
+
+    def test_get_search_have_no_results(self):
+        response = self.client.get(self.url, data={'search': 'qqqq'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'], [])
+
+        response1 = self.client.get(self.url, data={'search': 'qw'})
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response1.data['results'], [])
