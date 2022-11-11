@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, CharField, F
+from django.db.models import Value, CharField, F, Q, Case, When
 from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -191,28 +191,24 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
-    filter_backends = [SearchFilter]
-    # filterset_fields = ['safety_status']
-    # ordering_fields = ['name', 'address', 'state', 'contact_person_name']
-    # ordering = ['name', 'address', 'state', 'contact_person_name']
-    # search_fields = ['full_name']
-
     def get_queryset(self):
         pk = self.kwargs['pk']
 
         general_values = ('id', 'avatar', 'avatar_coord', 'phone_number', 'is_active')
         general_expressions = {'full_name': Concat('first_name', Value(' '), 'last_name', output_field=CharField())}
 
-        community_contact_person = User.objects.filter(communities__id=pk).values(
-            *general_values, **general_expressions,
-            role_id=Value(ProfileRoles.SUPERVISOR),
-            building_name=Value('Managing all buildings'))
-
-        buildings_contact_persons = User.objects.filter(buildings__community__id=pk).values(
-            *general_values, **general_expressions,
-            role_id=Value(ProfileRoles.COORDINATOR)
-        ).annotate(building_name=F('buildings__name'))
-
-        queryset = community_contact_person.union(buildings_contact_persons).order_by('-id')
+        queryset = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).values(
+            *general_values, **general_expressions,).annotate(
+            role_id=Case(
+                When(buildings__id__isnull=True, then=Value(ProfileRoles.SUPERVISOR)),
+                default=Value(ProfileRoles.COORDINATOR),
+                output_field=CharField(),
+            ),
+            building_name=Case(
+                When(buildings__id__isnull=True, then=Value('Managing all buildings')),
+                default=F('buildings__name'),
+                output_field=CharField(),
+            ),
+        )
 
         return queryset
