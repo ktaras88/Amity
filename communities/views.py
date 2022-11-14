@@ -9,7 +9,7 @@ from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -189,6 +189,9 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
+    filter_backends = [SearchFilter]
+    search_fields = ['full_name']
+
     def get_queryset(self):
         pk = self.kwargs['pk']
 
@@ -208,3 +211,17 @@ class CommunityMembersListAPIView(generics.ListAPIView):
         )
 
         return queryset
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Members search prediction for front end"
+))
+class MembersSearchPredictionsAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        data_for_search = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).\
+            annotate(full_name=Concat('first_name', Value(' '), 'last_name')). \
+            aggregate(full_names=ArrayAgg('full_name', distinct=True))
+        return Response({'members_search_list': data_for_search['full_names']}, status=status.HTTP_200_OK)
