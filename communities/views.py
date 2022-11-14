@@ -9,7 +9,7 @@ from localflavor.us.us_states import US_STATES
 from rest_framework import mixins, generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -217,7 +217,7 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     operation_summary="Members search prediction for front end"
 ))
 class MembersSearchPredictionsAPIView(APIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
