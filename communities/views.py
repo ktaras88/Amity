@@ -220,7 +220,8 @@ class MembersSearchPredictionsAPIView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request, *args, **kwargs):
-        data_for_search = User.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).\
-                                       aggregate(full_names=ArrayAgg('full_name', distinct=True))
-        members_search_list = set(data_for_search['full_names'])
-        return Response({'members_search_list': members_search_list})
+        pk = self.kwargs['pk']
+        data_for_search = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).\
+            annotate(full_name=Concat('first_name', Value(' '), 'last_name')). \
+            aggregate(full_names=ArrayAgg('full_name', distinct=True))
+        return Response({'members_search_list': data_for_search['full_names']}, status=status.HTTP_200_OK)
