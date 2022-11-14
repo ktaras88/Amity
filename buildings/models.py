@@ -13,6 +13,6 @@ class Building(models.Model):
     name = models.CharField('name', max_length=100)
     state = USStateField('state')
     address = models.CharField('address', max_length=100)
-    contact_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    contact_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='buildings')
     phone_number = models.CharField('phone number', validators=[phone_regex], max_length=20, null=True, blank=True)
     safety_status = models.BooleanField(default=True)
