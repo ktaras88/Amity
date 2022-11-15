@@ -190,3 +190,7 @@ FRONT_END_NEW_PASSWORD_URL = f'{FRONT_END_DOMAIN_URL}{FRONT_END_NEW_PASSWORD_PAR
 VALID_EXTENSIONS = ['jpg', 'png', 'jpeg']
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://qa-api-t2.amity.pp.ua/'
+]
