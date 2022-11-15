@@ -8,7 +8,7 @@ from .models import Profile
 User = get_user_model()
 admin.site.register(User)
 admin.site.register(Profile)
-#
+
 # class UserCreationForm(forms.ModelForm):
 #     class Meta:
 #         model = User
