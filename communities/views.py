@@ -86,7 +86,7 @@ class SearchPredictionsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         data_for_search = Community.objects.values('name', 'state'). \
-            annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')). \
+            annotate(contact_person=Concat('contact_person__first_name', Value(' '), 'contact_person__last_name')). \
             aggregate(contact_persons=ArrayAgg('contact_person', distinct=True),
                       community_names=ArrayAgg('name', distinct=True),
                       states=ArrayAgg('state', distinct=True))
@@ -104,7 +104,7 @@ class SupervisorDataAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         supervisor_data = User.objects.values('email', 'phone_number'). \
-            annotate(supervisor_name=Concat('first_name', Value('  '), 'last_name'))
+            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'))
 
         return Response({'supervisor_data': list(supervisor_data)})
 
