@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
     IsAmityAdministratorOrCommunityContactPerson
+from buildings.models import Building
 from users.choices_types import ProfileRoles
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
@@ -189,7 +190,8 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
-    filter_backends = [SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['role_id', 'building_name']
     search_fields = ['full_name']
 
     def get_queryset(self):
