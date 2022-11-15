@@ -192,5 +192,5 @@ VALID_EXTENSIONS = ['jpg', 'png', 'jpeg']
 CORS_ORIGIN_ALLOW_ALL = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://qa-api-t2.amity.pp.ua/'
+    'https://qa-api-t2.amity.pp.ua'
 ]
