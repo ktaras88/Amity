@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from users.choices_types import ProfileRoles
 from users.models import InvitationToken
 User = get_user_model()
 
@@ -337,3 +338,51 @@ class UserPasswordInformationTestCase(APITestCase):
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], 'Password fields didn\'t match.')
+
+
+class UsersRoleListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong',
+                                              first_name='First User1', last_name='Last User2',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong',
+                                              first_name='First User2', last_name='BBB',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong',
+                                              first_name='First User3', last_name='Last User3',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong',
+                                              first_name='First User4', last_name='Last User4',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user5 = User.objects.create_user(email='user5@user.com', password='strong',
+                                              first_name='First User5', last_name='Last User5',
+                                              role=ProfileRoles.COORDINATOR)
+
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+
+    def test_list_of_users_by_role_supervisor(self):
+        self.url = reverse('v1.0:users:users-role-list', args=['supervisor'])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['supervisor_data']), 2)
+
+    def test_list_of_users_by_role_coordinator(self):
+        self.url = reverse('v1.0:users:users-role-list', args=['coordinator'])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['coordinator_data']), 3)
+
+    def test_list_of_users_by_role_observer_empty_list(self):
+        self.url = reverse('v1.0:users:users-role-list', args=['observer'])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['observer_data']), 0)
+
+    def test_list_of_users_by_role_incorrect_role_name(self):
+        self.url = reverse('v1.0:users:users-role-list', args=['user'])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -14,6 +14,7 @@ from .validators import phone_regex
 
 User = get_user_model()
 
+
 class AuthenticationFailed(DRFAuthenticationFailed):
     status_code = status.HTTP_400_BAD_REQUEST
 
