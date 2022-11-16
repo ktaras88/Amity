@@ -193,7 +193,7 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['full_name']
     ordering = ['full_name']
-    filterset_fields = ['role_id', 'building_name']
+    filter_fields = ('role', 'building_name')
     search_fields = ['full_name']
 
     def get_queryset(self):
@@ -229,3 +229,15 @@ class MembersSearchPredictionsAPIView(APIView):
             annotate(full_name=Concat('first_name', Value(' '), 'last_name')). \
             aggregate(full_names=ArrayAgg('full_name', distinct=True))
         return Response({'members_search_list': data_for_search['full_names']}, status=status.HTTP_200_OK)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Buildings search prediction for frontend"
+))
+class FilterBuildingsAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        list_of_buildings = Building.objects.filter(community__id=pk).values('name').aggregate(name=ArrayAgg('name'))
+        return Response({'buildings_search_list': list_of_buildings}, status=status.HTTP_200_OK)
