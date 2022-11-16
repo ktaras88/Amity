@@ -182,6 +182,11 @@ class RecentActivityAPIView(generics.ListAPIView):
         return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
 
 
+class DynamicSearchFilter(SearchFilter):
+    def get_search_fields(self, view, request):
+        return request.GET.getlist('search_fields', [])
+
+
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="View list of community members"
 ))
@@ -190,11 +195,10 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, DynamicSearchFilter]
+    # filterset_fields = ['role_id', 'building_name']
     ordering_fields = ['full_name']
     ordering = ['full_name']
-    filter_fields = ('role', 'building_name')
-    search_fields = ['full_name']
 
     def get_queryset(self):
         pk = self.kwargs['pk']

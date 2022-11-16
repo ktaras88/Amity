@@ -568,7 +568,7 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
                                                   first_name='First-super', last_name='Last-super')
         self.user1 = User.objects.create_user(email='user@user1.user1', password='user1',
                                               first_name='User1_first', last_name='Last1',
-                                              role=ProfileRoles.COORDINATOR)
+                                              role=ProfileRoles.SUPERVISOR)
         self.user2 = User.objects.create_user(email='user@user2.user2', password='user2',
                                               first_name='User2_first', last_name='Last2',
                                               role=ProfileRoles.COORDINATOR)
@@ -586,7 +586,7 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
                                                    safety_status=True)
         self.url = reverse('v1.0:communities:communities-members-list', args=[self.community1.id])
         self.building1 = Building.objects.create(community_id=self.community1.id, name='building1', state='AZ',
-                                                 address='address1', contact_person=self.user1, phone_number=1234567)
+                                                 address='address1', contact_person=self.user2, phone_number=1234567)
         self.building2 = Building.objects.create(community_id=self.community1.id, name='building2', state='AZ',
                                                  address='address1', contact_person=self.user2, phone_number=1234567)
         self.building3 = Building.objects.create(community_id=self.community1.id, name='building3', state='AZ',
@@ -594,14 +594,23 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
         self.building4 = Building.objects.create(community_id=self.community1.id, name='building4', state='AZ',
                                                  address='address1', contact_person=self.user4, phone_number=1234567)
         self.building5 = Building.objects.create(community_id=self.community1.id, name='building5', state='AZ',
-                                                 address='address1', contact_person=self.user1, phone_number=1234567)
+                                                 address='address1', contact_person=self.user2, phone_number=1234567)
 
     def test_members_list_without_building_filter_show_all_members(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 5)
+        self.assertEqual(response.data['count'], 6)
 
     def test_members_list_with_filter_show_members_specific_building_only(self):
-        response = self.client.get(self.url + '?building=building1')
+        response = self.client.get(self.url + '?search=building1&search_fields=building_name')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['results'][0]['full_name'], self.user1.get_full_name())
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['full_name'], self.user2.get_full_name())
+
+    def test_members_list_with_filter_show_members_specific_role_only(self):
+        response = self.client.get(self.url + '?search=3&search_fields=role_id')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 5)
+        response_order = [item['full_name'] for item in response.data['results']]
+        expected_order = [str(self.user2), str(self.user2), str(self.user2), str(self.user3), str(self.user4)]
+        self.assertEqual(response_order, expected_order)
