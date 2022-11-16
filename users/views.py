@@ -1,13 +1,17 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Value
+from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerNotForResident
+from .choices_types import ProfileRoles
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
@@ -139,3 +143,29 @@ class UserPasswordInformationView(generics.UpdateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
     http_method_names = ["put"]
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Users list by role"
+))
+class UsersRoleListAPIView(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request, *args, **kwargs):
+        role = self.kwargs['role']
+        if role_id := next((key for key, value in dict(ProfileRoles.CHOICES).items() if value == role), None):
+            users_role_list = User.objects.filter(profile__role=role_id).values('id'). \
+                annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
+            return Response({'data': list(users_role_list)})
+        else:
+            return Response({'error': 'Role does not exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Get authenticated user id"
+))
+class GetAuthenticatedUserIdAPIView(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request, *args, **kwargs):
+        return Response({'user_id': request.user.id}, status=status.HTTP_200_OK)
