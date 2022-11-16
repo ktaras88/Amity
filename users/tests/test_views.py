@@ -368,19 +368,19 @@ class UsersRoleListAPIViewTestCase(APITestCase):
         self.url = reverse('v1.0:users:users-role-list', args=['supervisor'])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['supervisor_data']), 2)
+        self.assertEqual(len(response.data['data']), 2)
 
     def test_list_of_users_by_role_coordinator(self):
         self.url = reverse('v1.0:users:users-role-list', args=['coordinator'])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['coordinator_data']), 3)
+        self.assertEqual(len(response.data['data']), 3)
 
     def test_list_of_users_by_role_observer_empty_list(self):
         self.url = reverse('v1.0:users:users-role-list', args=['observer'])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['observer_data']), 0)
+        self.assertEqual(len(response.data['data']), 0)
 
     def test_list_of_users_by_role_incorrect_role_name(self):
         self.url = reverse('v1.0:users:users-role-list', args=['user'])
