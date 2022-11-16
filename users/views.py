@@ -153,10 +153,10 @@ class UsersRoleListAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         role = self.kwargs['role']
-        if role_id := [key for key, value in dict(ProfileRoles.CHOICES).items() if value == role]:
-            users_role_list = User.objects.filter(profile__role=role_id[0]).values('id'). \
+        if role_id := next((key for key, value in dict(ProfileRoles.CHOICES).items() if value == role), None):
+            users_role_list = User.objects.filter(profile__role=role_id).values('id'). \
                 annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
-            return Response({f'{role}_data': list(users_role_list)})
+            return Response({'data': list(users_role_list)})
         else:
             return Response({'error': 'Role does not exists'}, status=status.HTTP_400_BAD_REQUEST)
 
