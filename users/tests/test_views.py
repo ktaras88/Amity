@@ -414,6 +414,9 @@ class NewMemberAPIViewTestCase(APITestCase):
 
         self.url = reverse('v1.0:users:create-new-member')
 
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
     def test_create_new_member_permission_no_access_for_observer(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong2'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -439,8 +442,6 @@ class NewMemberAPIViewTestCase(APITestCase):
         self.assertEqual(Building.objects.filter(contact_person__email=data['email']).count(), 0)
 
     def test_create_new_member_permission_access_for_amity_admin_created_with_member_property(self):
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         data = {
             'email': 'user3@user.com',
             'first_name': 'First User3',
@@ -458,8 +459,6 @@ class NewMemberAPIViewTestCase(APITestCase):
 
 
     def test_create_new_member_permission_access_for_amity_admin_no_role_error(self):
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
         data = {
             'email': 'user3@user.com',
             'first_name': 'First User3',
