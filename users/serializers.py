@@ -3,7 +3,6 @@ from django.core import exceptions
 import django.contrib.auth.password_validation as validators
 
 from django.contrib.auth.models import update_last_login
-from django.core.validators import EmailValidator
 
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError, AuthenticationFailed as DRFAuthenticationFailed
