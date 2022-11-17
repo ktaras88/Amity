@@ -22,6 +22,10 @@ class AuthenticationFailed(DRFAuthenticationFailed):
 class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
     profile_id = serializers.IntegerField(default=None)
 
+    default_error_messages = {
+        "no_active_account": "Email or Password is not valid. Please, check provided information."
+    }
+
     def _pre_validate(self, attrs):
         authenticate_kwargs = {
             self.username_field: attrs[self.username_field],
