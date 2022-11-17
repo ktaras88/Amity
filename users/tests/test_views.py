@@ -363,9 +363,10 @@ class UsersRoleListAPIViewTestCase(APITestCase):
         self.user5 = User.objects.create_user(email='user5@user.com', password='strong',
                                               first_name='First User5', last_name='Last User5',
                                               role=ProfileRoles.COORDINATOR)
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
+                                                                   'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
 
     def test_list_of_users_by_role_supervisor(self):
         self.url = reverse('v1.0:users:users-role-list', args=['supervisor'])
