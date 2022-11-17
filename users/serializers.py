@@ -3,6 +3,7 @@ from django.core import exceptions
 import django.contrib.auth.password_validation as validators
 
 from django.contrib.auth.models import update_last_login
+from django.core.validators import EmailValidator
 
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError, AuthenticationFailed as DRFAuthenticationFailed
@@ -184,3 +185,12 @@ class UserPasswordInformationSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    role = serializers.IntegerField()
+    property = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'property']

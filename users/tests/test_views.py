@@ -8,8 +8,11 @@ from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from buildings.models import Building
+from communities.models import Community
 from users.choices_types import ProfileRoles
-from users.models import InvitationToken
+from users.models import InvitationToken, Profile
+
 User = get_user_model()
 
 
@@ -386,3 +389,83 @@ class UsersRoleListAPIViewTestCase(APITestCase):
         self.url = reverse('v1.0:users:users-role-list', args=['user'])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class NewMemberAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong1',
+                                              first_name='First User1', last_name='Last User1',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong2',
+                                              first_name='First User2', last_name='Last User2',
+                                              role=ProfileRoles.OBSERVER)
+        self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
+                                            phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
+                                              address='address1', contact_person=self.user2, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='DC',
+                                              address='address2', phone_number=7654321)
+        self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
+                                              address='address3', phone_number=7654321)
+
+        self.url = reverse('v1.0:users:create-new-member')
+
+    def test_create_new_member_permission_no_access_for_observer(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong2'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_new_member_permission_access_for_supervizor_created_without_member_property(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong1'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        data = {
+            'email': 'user3@user.com',
+            'first_name': 'First User3',
+            'last_name': 'Last User3',
+            'address': 'User address',
+            'role': ProfileRoles.SUPERVISOR
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(User.objects.filter(email=data['email']).count(), 1)
+        self.assertEqual(Profile.objects.filter(user__email=data['email']).count(), 1)
+        self.assertEqual(Profile.objects.get(user__email=data['email']).role, ProfileRoles.SUPERVISOR)
+        self.assertEqual(Building.objects.filter(contact_person__email=data['email']).count(), 0)
+
+    def test_create_new_member_permission_access_for_amity_admin_created_with_member_property(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        data = {
+            'email': 'user3@user.com',
+            'first_name': 'First User3',
+            'last_name': 'Last User3',
+            'address': 'User address',
+            'role': ProfileRoles.COORDINATOR,
+            'property': self.build2.id
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(User.objects.filter(email=data['email']).count(), 1)
+        self.assertEqual(Profile.objects.filter(user__email=data['email']).count(), 1)
+        self.assertEqual(Profile.objects.get(user__email=data['email']).role, ProfileRoles.COORDINATOR)
+        self.assertEqual(Building.objects.filter(contact_person__email=data['email']).count(), 1)
+
+
+    def test_create_new_member_permission_access_for_amity_admin_no_role_error(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        data = {
+            'email': 'user3@user.com',
+            'first_name': 'First User3',
+            'last_name': 'Last User3',
+            'address': 'User address'
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['role'][0], 'This field is required.')
+
