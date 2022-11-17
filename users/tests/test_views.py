@@ -414,6 +414,13 @@ class NewMemberAPIViewTestCase(APITestCase):
 
         self.url = reverse('v1.0:users:create-new-member')
 
+        self.data = {
+            'email': 'site.vizit@gmail.com',
+            'first_name': 'First User3',
+            'last_name': 'Last User3',
+            'address': 'User address',
+        }
+
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
@@ -426,46 +433,29 @@ class NewMemberAPIViewTestCase(APITestCase):
     def test_create_new_member_permission_access_for_supervizor_created_without_member_property(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong1'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        data = {
-            'email': 'user3@user.com',
-            'first_name': 'First User3',
-            'last_name': 'Last User3',
-            'address': 'User address',
-            'role': ProfileRoles.SUPERVISOR
-        }
-        response = self.client.post(self.url, data)
+        self.data.update({'role': ProfileRoles.SUPERVISOR})
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.filter(email=data['email']).count(), 1)
-        self.assertEqual(Profile.objects.filter(user__email=data['email']).count(), 1)
-        self.assertEqual(Profile.objects.get(user__email=data['email']).role, ProfileRoles.SUPERVISOR)
-        self.assertEqual(Building.objects.filter(contact_person__email=data['email']).count(), 0)
+        self.assertEqual(User.objects.filter(email=self.data['email']).count(), 1)
+        self.assertEqual(Profile.objects.filter(user__email=self.data['email']).count(), 1)
+        self.assertEqual(Profile.objects.get(user__email=self.data['email']).role, ProfileRoles.SUPERVISOR)
+        self.assertEqual(Building.objects.filter(contact_person__email=self.data['email']).count(), 0)
 
     def test_create_new_member_permission_access_for_amity_admin_created_with_member_property(self):
-        data = {
-            'email': 'user3@user.com',
-            'first_name': 'First User3',
-            'last_name': 'Last User3',
-            'address': 'User address',
+        self.data.update({
             'role': ProfileRoles.COORDINATOR,
             'property': self.build2.id
-        }
-        response = self.client.post(self.url, data)
+        })
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.filter(email=data['email']).count(), 1)
-        self.assertEqual(Profile.objects.filter(user__email=data['email']).count(), 1)
-        self.assertEqual(Profile.objects.get(user__email=data['email']).role, ProfileRoles.COORDINATOR)
-        self.assertEqual(Building.objects.filter(contact_person__email=data['email']).count(), 1)
+        self.assertEqual(User.objects.filter(email=self.data['email']).count(), 1)
+        self.assertEqual(Profile.objects.filter(user__email=self.data['email']).count(), 1)
+        self.assertEqual(Profile.objects.get(user__email=self.data['email']).role, ProfileRoles.COORDINATOR)
+        self.assertEqual(Building.objects.filter(contact_person__email=self.data['email']).count(), 1)
 
 
     def test_create_new_member_permission_access_for_amity_admin_no_role_error(self):
-        data = {
-            'email': 'user3@user.com',
-            'first_name': 'First User3',
-            'last_name': 'Last User3',
-            'address': 'User address'
-        }
-        response = self.client.post(self.url, data)
+        response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['role'][0], 'This field is required.')
-

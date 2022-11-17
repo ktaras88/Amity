@@ -15,7 +15,7 @@ from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
     UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer
-from .utils import PropertyMixin, RoleMixin
+from .mixins import PropertyMixin, RoleMixin
 
 User = get_user_model()
 
@@ -180,8 +180,7 @@ class NewMemberAPIView(PropertyMixin, generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)
-        if 'property' in self.request.POST:
-            property_id = self.request.POST['property']
+        if property_id := self.request.POST.get('property'):
             if model := self.get_property_model_by_role(serializer.validated_data['role']):
                 model.objects.filter(id=property_id).update(contact_person=user)
 
@@ -189,16 +188,14 @@ class NewMemberAPIView(PropertyMixin, generics.CreateAPIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="Property list by role"
 ))
-class MemberPropertyAPIView(RoleMixin, PropertyMixin, APIView):
+class PropertiesWithoutContactPersonAPIView(RoleMixin, PropertyMixin, APIView):
     permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
 
     def get(self, request, role, *args, **kwargs):
         if role_id := self.get_role_id(role):
             if model := self.get_property_model_by_role(role_id):
-                model_values = ('id', 'name')
-                model_filter = {'contact_person_id__isnull': True}
-                query = model.objects.filter(**model_filter).values(*model_values)
-                return Response({'data': list(query)}, status=status.HTTP_200_OK)
+                properties = model.objects.filter(contact_person_id__isnull=True).values('id', 'name')
+                return Response({'data': list(properties)}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Property does not exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
