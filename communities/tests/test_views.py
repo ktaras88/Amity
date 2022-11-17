@@ -581,7 +581,7 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
         self.client = APIClient()
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@super.super', 'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-        self.community1 = Community.objects.create(name='Davida', state='IL', zip_code=1111, address='davida_address',
+        self.community1 = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
                                                    contact_person=self.user1, phone_number=1230456204,
                                                    safety_status=True)
         self.url = reverse('v1.0:communities:communities-members-list', args=[self.community1.id])
@@ -602,13 +602,13 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.data['count'], 6)
 
     def test_members_list_with_filter_show_members_specific_building_only(self):
-        response = self.client.get(self.url + '?search=building1&search_fields=building_name')
+        response = self.client.get(self.url + '?building_name_search=building1')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(response.data['results'][0]['full_name'], self.user2.get_full_name())
 
     def test_members_list_with_filter_show_members_specific_role_only(self):
-        response = self.client.get(self.url + '?search=3&search_fields=role_id')
+        response = self.client.get(self.url + '?role_id_search=3')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 5)
         response_order = [item['full_name'] for item in response.data['results']]

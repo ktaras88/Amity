@@ -18,6 +18,7 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
     IsAmityAdministratorOrCommunityContactPerson
 from buildings.models import Building
 from users.choices_types import ProfileRoles
+from users.filters import CustomFilterSetForBuildingsAndRoles
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
@@ -182,23 +183,18 @@ class RecentActivityAPIView(generics.ListAPIView):
         return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
 
 
-class DynamicSearchFilter(SearchFilter):
-    def get_search_fields(self, view, request):
-        return request.GET.getlist('search_fields', [])
-
-
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="View list of community members"
 ))
 class CommunityMembersListAPIView(generics.ListAPIView):
-    queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
-    filter_backends = [DjangoFilterBackend, OrderingFilter, DynamicSearchFilter]
-    # filterset_fields = ['role_id', 'building_name']
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = CustomFilterSetForBuildingsAndRoles
     ordering_fields = ['full_name']
-    ordering = ['full_name']
+    ordering = ['is_active', 'full_name']
+    search_fields = ['full_name']
 
     def get_queryset(self):
         pk = self.kwargs['pk']
