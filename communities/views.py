@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, CharField, F, Q, Case, When
+from django.db.models import Value, CharField, F, Q, Case, When, Subquery
 from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
     IsAmityAdministratorOrCommunityContactPerson
+from buildings.models import Building
 from users.choices_types import ProfileRoles
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
@@ -227,3 +228,31 @@ class MembersSearchPredictionsAPIView(APIView):
             annotate(full_name=Concat('first_name', Value(' '), 'last_name')). \
             aggregate(full_names=ArrayAgg('full_name', distinct=True))
         return Response({'members_search_list': data_for_search['full_names']}, status=status.HTTP_200_OK)
+
+
+class DetailMemberPageAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+
+    def get(self, request, pk, member_pk, *args, **kwargs):
+        if not Community.objects.filter(id=pk).exists():
+            return Response({'error': "There is no such community"}, status=status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(id=member_pk).exists():
+            return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+        member = User.objects.filter(id=member_pk).values('email', 'phone_number', 'avatar', 'avatar_coord',
+                                                          'profile__role').annotate(full_name=Concat('first_name',
+                                                                                                     Value(' '),
+                                                                                                     'last_name'))
+        return Response({'member_data': member}, status=status.HTTP_200_OK)
+
+
+class DetailMemberPageAccessListAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+
+    def get(self, request, pk,  member_pk, *args, **kwargs):
+        if not Community.objects.filter(id=pk).exists():
+            return Response({'error': "There is no such community"}, status=status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(id=member_pk).exists():
+            return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+        access_list = Building.objects.filter(Q(contact_person=member_pk) | Q(community__contact_person=member_pk)).\
+            values('name', 'address', 'phone_number')
+        return Response({'accesses': access_list}, status=status.HTTP_200_OK)
