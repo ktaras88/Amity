@@ -635,17 +635,17 @@ class DetailMemberPageAccessListAPIViewTestCase(APITestCase):
     def test_get_supervisor_accesses(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['accesses']), 4)
-        self.assertEqual(response.data['accesses'][0], {'name': self.build1.name,
+        self.assertEqual(len(response.data['results']), 4)
+        self.assertEqual(response.data['results'][0], {'name': self.build1.name,
                                                         'address': self.build1.address,
                                                         'phone_number': str(self.build1.phone_number)})
-        self.assertEqual(response.data['accesses'][1], {'name': self.build2.name,
+        self.assertEqual(response.data['results'][1], {'name': self.build2.name,
                                                         'address': self.build2.address,
                                                         'phone_number': str(self.build2.phone_number)})
-        self.assertEqual(response.data['accesses'][2], {'name': self.build3.name,
+        self.assertEqual(response.data['results'][2], {'name': self.build3.name,
                                                         'address': self.build3.address,
                                                         'phone_number': str(self.build3.phone_number)})
-        self.assertEqual(response.data['accesses'][3], {'name': self.build4.name,
+        self.assertEqual(response.data['results'][3], {'name': self.build4.name,
                                                         'address': self.build4.address,
                                                         'phone_number': str(self.build4.phone_number)})
 
@@ -653,11 +653,11 @@ class DetailMemberPageAccessListAPIViewTestCase(APITestCase):
         url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': self.user1.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['accesses']), 2)
-        self.assertEqual(response.data['accesses'][0], {'name': self.build1.name,
+        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(response.data['results'][0], {'name': self.build1.name,
                                                         'address': self.build1.address,
                                                         'phone_number': str(self.build1.phone_number)})
-        self.assertEqual(response.data['accesses'][1], {'name': self.build2.name,
+        self.assertEqual(response.data['results'][1], {'name': self.build2.name,
                                                         'address': self.build2.address,
                                                         'phone_number': str(self.build2.phone_number)})
 
@@ -665,7 +665,7 @@ class DetailMemberPageAccessListAPIViewTestCase(APITestCase):
         url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': self.user.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['accesses']), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_wrong_community_id(self):
         url = reverse('v1.0:communities:access-list', kwargs={'pk': 333, 'member_pk': self.user.id})
