@@ -38,3 +38,13 @@ class IsAmityAdministratorOrCommunityContactPerson(IsAuthenticated):
                                                                        contact_person__id=request.user.id).exists()
         return bool(perm and (request.auth['role'] == ProfileRoles.AMITY_ADMINISTRATOR or
                             (request.auth['role'] == ProfileRoles.SUPERVISOR and community_contact_person_permission)))
+
+
+class IsAmityAdministratorOrSupervisorOrCoordinator(IsAuthenticated):
+    def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        return bool(perm and request.auth['role'] in (
+            ProfileRoles.AMITY_ADMINISTRATOR,
+            ProfileRoles.SUPERVISOR,
+            ProfileRoles.COORDINATOR
+        ))

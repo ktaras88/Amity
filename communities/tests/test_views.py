@@ -447,7 +447,7 @@ class CommunityMembersViewSetTestCase(APITestCase):
         self.assertTrue(response.data['previous'])
 
 
-class SearchCommunityMembersListAPIView(APITestCase):
+class SearchCommunityMembersListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
                                                   first_name='First-super', last_name='Last-super')
@@ -517,7 +517,7 @@ class SearchCommunityMembersListAPIView(APITestCase):
         self.assertEqual(response1.data['results'], [])
 
 
-class OrderCommunityMembersListAPIView(APITestCase):
+class OrderCommunityMembersListAPIViewTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
                                                   first_name='First-super', last_name='Last-super')
@@ -561,3 +561,120 @@ class OrderCommunityMembersListAPIView(APITestCase):
         response_order = [item['full_name'] for item in response.data['results']]
         expected_order = [str(self.user3), str(self.user1), str(self.user2), str(self.user4)]
         self.assertEqual(response_order, expected_order)
+
+
+class DetailMemberPageAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user01@user1.user1', password='M@rkHami11',
+                                              first_name='Mark', last_name='Hamill',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user2 = User.objects.create_user(email='user02@user2.user2', password='M@rkHami22',
+                                              first_name='AAA', last_name='BBB',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
+                                            contact_person=self.user2, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.url = reverse('v1.0:communities:detail-member-page', kwargs={'pk': self.com.id, 'member_pk': self.user1.id})
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@admin.admin', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_get_coordinator_member(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['member_data'][0], {'email': self.user1.email,
+                                                           'phone_number': self.user1.phone_number,
+                                                           'avatar': '',
+                                                           'avatar_coord': self.user1.avatar_coord,
+                                                           'profile__role': ProfileRoles.COORDINATOR,
+                                                           'full_name': self.user1.get_full_name()})
+
+    def test_get_supervisor_member(self):
+        url = reverse('v1.0:communities:detail-member-page', kwargs={'pk': self.com.id, 'member_pk': self.user2.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['member_data'][0], {'email': self.user2.email,
+                                                           'phone_number': self.user2.phone_number,
+                                                           'avatar': '',
+                                                           'avatar_coord': self.user2.avatar_coord,
+                                                           'profile__role': ProfileRoles.SUPERVISOR,
+                                                           'full_name': self.user2.get_full_name()})
+
+
+class DetailMemberPageAccessListAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user01@user1.user1', password='M@rkHami11',
+                                              first_name='Mark', last_name='Hamill',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user2 = User.objects.create_user(email='user02@user2.user2', password='M@rkHami22',
+                                              first_name='AAA', last_name='BBB',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user3 = User.objects.create_user(email='user03@user3.user3', password='M@rkHami33',
+                                              first_name='QQQQ', last_name='WWWW',
+                                              role=ProfileRoles.COORDINATOR)
+        self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
+                                            contact_person=self.user2, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AZ',
+                                              address='address2', contact_person=self.user1, phone_number=7654321)
+        self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='AZ',
+                                              address='address3', contact_person=self.user3, phone_number=7654321)
+        self.build4 = Building.objects.create(community_id=self.com.id, name='building4', state='AZ',
+                                              address='address4', contact_person=self.user3, phone_number=7654321)
+        self.url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': self.user2.id})
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@admin.admin', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_get_supervisor_accesses(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 4)
+        self.assertEqual(response.data['results'][0], {'name': self.build1.name,
+                                                        'address': self.build1.address,
+                                                        'phone_number': str(self.build1.phone_number)})
+        self.assertEqual(response.data['results'][1], {'name': self.build2.name,
+                                                        'address': self.build2.address,
+                                                        'phone_number': str(self.build2.phone_number)})
+        self.assertEqual(response.data['results'][2], {'name': self.build3.name,
+                                                        'address': self.build3.address,
+                                                        'phone_number': str(self.build3.phone_number)})
+        self.assertEqual(response.data['results'][3], {'name': self.build4.name,
+                                                        'address': self.build4.address,
+                                                        'phone_number': str(self.build4.phone_number)})
+
+    def test_get_coordinator_accesses(self):
+        url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': self.user1.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(response.data['results'][0], {'name': self.build1.name,
+                                                        'address': self.build1.address,
+                                                        'phone_number': str(self.build1.phone_number)})
+        self.assertEqual(response.data['results'][1], {'name': self.build2.name,
+                                                        'address': self.build2.address,
+                                                        'phone_number': str(self.build2.phone_number)})
+
+    def test_user_has_no_properties(self):
+        url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': self.user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 0)
+
+    def test_wrong_community_id(self):
+        url = reverse('v1.0:communities:access-list', kwargs={'pk': 333, 'member_pk': self.user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'There is no such community')
+
+    def test_wrong_member_id(self):
+        url = reverse('v1.0:communities:access-list', kwargs={'pk': self.com.id, 'member_pk': 333})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'There is no such user.')

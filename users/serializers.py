@@ -188,3 +188,12 @@ class UserPasswordInformationSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    role = serializers.IntegerField()
+    property = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'property']

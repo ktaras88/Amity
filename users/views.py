@@ -10,12 +10,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from amity_api.permission import IsOwnerNotForResident
-from .choices_types import ProfileRoles
+from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
-    UserContactInformationSerializer, UserPasswordInformationSerializer
+    UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer
+from .mixins import PropertyMixin, RoleMixin
 
 User = get_user_model()
 
@@ -148,12 +148,11 @@ class UserPasswordInformationView(generics.UpdateAPIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="Users list by role"
 ))
-class UsersRoleListAPIView(APIView):
-    permission_classes = (IsAuthenticated, )
+class UsersRoleListAPIView(RoleMixin, APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
 
-    def get(self, request, *args, **kwargs):
-        role = self.kwargs['role']
-        if role_id := next((key for key, value in dict(ProfileRoles.CHOICES).items() if value == role), None):
+    def get(self, request, role, *args, **kwargs):
+        if role_id := self.get_role_id(role):
             users_role_list = User.objects.filter(profile__role=role_id).values('id'). \
                 annotate(full_name=Concat('first_name', Value(' '), 'last_name'))
             return Response({'data': list(users_role_list)})
@@ -169,3 +168,35 @@ class GetAuthenticatedUserIdAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         return Response({'user_id': request.user.id}, status=status.HTTP_200_OK)
+
+
+@method_decorator(name='create', decorator=swagger_auto_schema(
+    operation_summary="Create new member"
+))
+class NewMemberAPIView(PropertyMixin, generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
+    serializer_class = MemberSerializer
+
+    def perform_create(self, serializer):
+        user = User.objects.create_user(**serializer.validated_data)
+        if property_id := self.request.POST.get('property'):
+            if model := self.get_property_model_by_role(serializer.validated_data['role']):
+                model.objects.filter(id=property_id).update(contact_person=user)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Property list by role"
+))
+class PropertiesWithoutContactPersonAPIView(RoleMixin, PropertyMixin, APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
+
+    def get(self, request, role, *args, **kwargs):
+        if role_id := self.get_role_id(role):
+            if model := self.get_property_model_by_role(role_id):
+                properties = model.objects.filter(contact_person_id__isnull=True).values('id', 'name')
+                return Response({'data': list(properties)}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Property does not exists'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Role does not exists'}, status=status.HTTP_400_BAD_REQUEST)
