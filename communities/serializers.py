@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from localflavor.us.us_states import US_STATES
 from rest_framework import serializers
 
+from buildings.models import Building
 from users.choices_types import ProfileRoles
 from users.validators import phone_regex
 from .models import Community, RecentActivity
@@ -63,3 +64,9 @@ class CommunityMembersListSerializer(serializers.ModelSerializer):
 
     def get_role(self, obj):
         return dict(ProfileRoles.CHOICES)[obj['role_id']]
+
+
+class DetailMemberPageAccessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Building
+        fields = ['name', 'address', 'phone_number']
