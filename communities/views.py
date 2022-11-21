@@ -18,6 +18,7 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
     IsAmityAdministratorOrCommunityContactPerson
 from buildings.models import Building
 from users.choices_types import ProfileRoles
+from users.filters import CommunityMembersFilter
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
@@ -191,8 +192,9 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     serializer_class = CommunityMembersListSerializer
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = CommunityMembersFilter
     ordering_fields = ['full_name']
-    ordering = ['full_name']
+    ordering = ['is_active', 'full_name']
     search_fields = ['full_name']
 
     def get_queryset(self):
@@ -228,6 +230,18 @@ class MembersSearchPredictionsAPIView(APIView):
             annotate(full_name=Concat('first_name', Value(' '), 'last_name')). \
             aggregate(full_names=ArrayAgg('full_name', distinct=True))
         return Response({'members_search_list': data_for_search['full_names']}, status=status.HTTP_200_OK)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Buildings search prediction for frontend"
+))
+class BuildingsNameListAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        list_of_buildings = Building.objects.filter(community__id=pk).values_list('name', flat=True).distinct()
+        return Response({'buildings_search_list': list_of_buildings}, status=status.HTTP_200_OK)
 
 
 class DetailMemberPageAPIView(APIView):
