@@ -14,12 +14,17 @@ from .validators import phone_regex
 
 User = get_user_model()
 
+
 class AuthenticationFailed(DRFAuthenticationFailed):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
 class TokenObtainPairSerializer(SimpleJWTTokenObtainPairSerializer):
     profile_id = serializers.IntegerField(default=None)
+
+    default_error_messages = {
+        "no_active_account": "Email or Password is not valid. Please, check provided information."
+    }
 
     def _pre_validate(self, attrs):
         authenticate_kwargs = {
@@ -183,3 +188,12 @@ class UserPasswordInformationSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    role = serializers.IntegerField()
+    property = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'property']

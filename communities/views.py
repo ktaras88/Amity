@@ -18,11 +18,11 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
     IsAmityAdministratorOrCommunityContactPerson
 from buildings.models import Building
 from users.choices_types import ProfileRoles
-from users.filters import CustomFilterSetForBuildingsAndRoles
+from users.filters import CommunityMembersFilter
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
-    CommunityMembersListSerializer
+    CommunityMembersListSerializer, DetailMemberPageAccessSerializer
 
 User = get_user_model()
 
@@ -88,7 +88,7 @@ class SearchPredictionsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         data_for_search = Community.objects.values('name', 'state'). \
-            annotate(contact_person=Concat('contact_person__first_name', Value('  '), 'contact_person__last_name')). \
+            annotate(contact_person=Concat('contact_person__first_name', Value(' '), 'contact_person__last_name')). \
             aggregate(contact_persons=ArrayAgg('contact_person', distinct=True),
                       community_names=ArrayAgg('name', distinct=True),
                       states=ArrayAgg('state', distinct=True))
@@ -106,7 +106,7 @@ class SupervisorDataAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         supervisor_data = User.objects.values('email', 'phone_number'). \
-            annotate(supervisor_name=Concat('first_name', Value('  '), 'last_name'))
+            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'))
 
         return Response({'supervisor_data': list(supervisor_data)})
 
@@ -187,11 +187,12 @@ class RecentActivityAPIView(generics.ListAPIView):
     operation_summary="View list of community members"
 ))
 class CommunityMembersListAPIView(generics.ListAPIView):
+    queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     serializer_class = CommunityMembersListSerializer
 
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    filterset_class = CustomFilterSetForBuildingsAndRoles
+    filterset_class = CommunityMembersFilter
     ordering_fields = ['full_name']
     ordering = ['is_active', 'full_name']
     search_fields = ['full_name']
@@ -239,5 +240,36 @@ class FilterBuildingsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        list_of_buildings = Building.objects.filter(community__id=pk).values('name').aggregate(name=ArrayAgg('name'))
+        list_of_buildings = Building.objects.filter(community__id=pk).values_list('name', flat=True).distinct()
         return Response({'buildings_search_list': list_of_buildings}, status=status.HTTP_200_OK)
+
+
+class DetailMemberPageAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+
+    def get(self, request, pk, member_pk, *args, **kwargs):
+        if not Community.objects.filter(id=pk).exists():
+            return Response({'error': "There is no such community"}, status=status.HTTP_400_BAD_REQUEST)
+        if member := User.objects.filter(id=member_pk).\
+                values('email', 'phone_number', 'avatar', 'avatar_coord', 'profile__role').\
+                annotate(full_name=Concat('first_name', Value(' '), 'last_name')):
+            return Response({'member_data': member}, status=status.HTTP_200_OK)
+        return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DetailMemberPageAccessListAPIView(generics.ListAPIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+    serializer_class = DetailMemberPageAccessSerializer
+
+    def get_queryset(self):
+        member_pk = self.kwargs['member_pk']
+        query = Building.objects.filter(Q(contact_person=member_pk) | Q(community__contact_person=member_pk)).\
+            values('name', 'address', 'phone_number')
+        return query
+
+    def list(self, request, pk, member_pk,  *args, **kwargs):
+        if not Community.objects.filter(id=pk).exists():
+            return Response({'error': "There is no such community"}, status=status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(id=member_pk).exists():
+            return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().list(request, *args, **kwargs)
