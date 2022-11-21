@@ -607,13 +607,33 @@ class FilterCommunityMembersListAPIViewTestCase(APITestCase):
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(response.data['results'][0]['full_name'], self.user2.get_full_name())
 
+    def test_members_list_with_filter_truncated_building_name(self):
+        response = self.client.get(self.url + '?building_name_search=build')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 6)
+        response_order = [item['full_name'] for item in response.data['results']]
+        expected_order = [str(self.user1), str(self.user2), str(self.user2), str(self.user2), str(self.user3), str(self.user4)]
+        self.assertEqual(response_order, expected_order)
+
+    def test_members_list_with_filter_non_existing_building(self):
+        response = self.client.get(self.url + '?building_name_search=mmmmmmmmmm')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+        self.assertEqual(response.data['results'], [])
+
     def test_members_list_with_filter_show_members_specific_role_only(self):
-        response = self.client.get(self.url + '?role_id_search=3')
+        response = self.client.get(self.url + '?role_search=coordinator')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 5)
         response_order = [item['full_name'] for item in response.data['results']]
         expected_order = [str(self.user2), str(self.user2), str(self.user2), str(self.user3), str(self.user4)]
         self.assertEqual(response_order, expected_order)
+
+    def test_members_list_with_filter_non_existing_role(self):
+        response = self.client.get(self.url + '?role_search=manager')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+        self.assertEqual(response.data['results'], [])
 
 
 class DetailMemberPageAPIViewTestCase(APITestCase):

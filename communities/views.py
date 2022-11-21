@@ -235,7 +235,7 @@ class MembersSearchPredictionsAPIView(APIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="Buildings search prediction for frontend"
 ))
-class FilterBuildingsAPIView(APIView):
+class BuildingsNameListAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
