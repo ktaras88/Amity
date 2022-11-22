@@ -87,6 +87,14 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.get_full_name()
 
+    def inactivate_user(self):
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+
+    def activate_user(self):
+        self.is_active = True
+        self.save(update_fields=['is_active'])
+
 
 class Profile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
