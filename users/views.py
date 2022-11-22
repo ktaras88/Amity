@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
-from communities.models import Community
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
