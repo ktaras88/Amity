@@ -200,3 +200,13 @@ class PropertiesWithoutContactPersonAPIView(RoleMixin, PropertyMixin, APIView):
                 return Response({'error': 'Property does not exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'Role does not exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ActivateSpecificMemberAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator,)
+
+    def put(self, request, *args, **kwargs):
+        if user := User.objects.filter(id=kwargs['pk']).first():
+            user.activate_user()
+            return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
+        return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)

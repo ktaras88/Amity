@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSupervisor, \
-    IsAmityAdministratorOrCommunityContactPerson
+    IsAmityAdministratorOrCommunityContactPerson, IsAmityAdministratorOrSupervisorOrCoordinator
 from buildings.models import Building
 from users.choices_types import ProfileRoles
 from users.filters import CommunityMembersFilter
@@ -273,3 +273,17 @@ class DetailMemberPageAccessListAPIView(generics.ListAPIView):
         if not User.objects.filter(id=member_pk).exists():
             return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
         return super().list(request, *args, **kwargs)
+
+
+class InactivateSpecificMemberAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator,)
+
+    def put(self, request, *args, **kwargs):
+        if not Community.objects.filter(id=kwargs['pk']).exists():
+            return Response({'error': "There is no such community"}, status=status.HTTP_400_BAD_REQUEST)
+        if user := User.objects.filter(id=kwargs['member_pk']).first():
+            user.inactivate_user()
+            user.communities.update(contact_person=None)
+            user.buildings.update(contact_person=None)
+            return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
+        return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
