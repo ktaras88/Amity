@@ -19,10 +19,11 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
 from buildings.models import Building
 from users.choices_types import ProfileRoles
 from users.filters import CommunityMembersFilter
+from users.mixins import PropertyMixin
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
-    CommunityMembersListSerializer, DetailMemberPageAccessSerializer
+    CommunityMembersListSerializer, DetailMemberPageAccessSerializer, CommunityMemberSerializer
 
 User = get_user_model()
 
@@ -183,14 +184,15 @@ class RecentActivityAPIView(generics.ListAPIView):
         return RecentActivity.objects.filter(community=self.kwargs['pk'])[:50]
 
 
+@method_decorator(name='post', decorator=swagger_auto_schema(
+    operation_summary="Create new member in the community"
+))
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="View list of community members"
 ))
-class CommunityMembersListAPIView(generics.ListAPIView):
+class CommunityMembersListAPIView(PropertyMixin, generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
-    serializer_class = CommunityMembersListSerializer
-
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = CommunityMembersFilter
     ordering_fields = ['full_name']
@@ -198,31 +200,42 @@ class CommunityMembersListAPIView(generics.ListAPIView):
     search_fields = ['full_name']
 
     def get_queryset(self):
-        pk = self.kwargs['pk']
+        if self.request.method == 'GET':
+            pk = self.kwargs['pk']
+            queryset = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).values(
+                'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active').annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
+                role_id=Case(
+                    When(buildings__id__isnull=True, then=Value(ProfileRoles.SUPERVISOR)),
+                    default=Value(ProfileRoles.COORDINATOR),
+                    output_field=CharField(),
+                ),
+                building_name=Case(
+                    When(buildings__id__isnull=True, then=Value('Managing all buildings')),
+                    default=F('buildings__name'),
+                    output_field=CharField(),
+                ),
+            )
+            return queryset
+        return super().get_queryset()
 
-        queryset = User.objects.filter(Q(communities__id=pk) | Q(buildings__community__id=pk)).values(
-            'id', 'avatar', 'avatar_coord', 'phone_number', 'is_active').annotate(
-            full_name=Concat('first_name', Value(' '), 'last_name', output_field=CharField()),
-            role_id=Case(
-                When(buildings__id__isnull=True, then=Value(ProfileRoles.SUPERVISOR)),
-                default=Value(ProfileRoles.COORDINATOR),
-                output_field=CharField(),
-            ),
-            building_name=Case(
-                When(buildings__id__isnull=True, then=Value('Managing all buildings')),
-                default=F('buildings__name'),
-                output_field=CharField(),
-            ),
-        )
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return CommunityMembersListSerializer
+        return CommunityMemberSerializer
 
-        return queryset
+    def perform_create(self, serializer):
+        user = User.objects.create_user(**dict((lambda property, **kw: kw)(**serializer.validated_data)))
+        property_id = serializer.validated_data['property']
+        if model := self.get_property_model_by_role(serializer.validated_data['role']):
+            model.objects.filter(id=property_id).update(contact_person=user)
 
 
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="Members search prediction for front end"
 ))
 class MembersSearchPredictionsAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
