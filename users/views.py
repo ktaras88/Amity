@@ -221,4 +221,5 @@ class RolesListAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         role = request.auth['role']
-        return Response(dict((i[0], i[1]) for i in ProfileRoles.CHOICES if i[0] > role))
+        roles_list = dict((i[0], i[1]) for i in ProfileRoles.CHOICES if i[0] > role)
+        return Response({'roles_list': roles_list})
