@@ -307,6 +307,7 @@ class InactivateSpecificMemberAPIView(APIView):
     operation_summary="List of free roles in community below the auth user's role"
 ))
 class BelowRolesWithFreePropertiesListAPIView(BelowRolesListAPIView):
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
     def property_list(self, model, filter_name):
         return model.objects.values('id', 'name').filter(**filter_name, contact_person__isnull=True)
 
