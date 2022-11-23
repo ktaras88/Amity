@@ -19,8 +19,7 @@ from amity_api.permission import IsAmityAdministrator, IsAmityAdministratorOrSup
 from buildings.models import Building
 from users.choices_types import ProfileRoles
 from users.filters import CommunityMembersFilter
-from users.mixins import PropertyMixin
-from users.views import BelowRolesListAPIView
+from users.mixins import PropertyMixin, BelowRolesListMixin
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
@@ -306,8 +305,9 @@ class InactivateSpecificMemberAPIView(APIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="List of free roles in community below the auth user's role"
 ))
-class BelowRolesWithFreePropertiesListAPIView(BelowRolesListAPIView):
+class BelowRolesWithFreePropertiesListAPIView(BelowRolesListMixin, APIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+
     def property_list(self, model, filter_name):
         return model.objects.values('id', 'name').filter(**filter_name, contact_person__isnull=True)
 
