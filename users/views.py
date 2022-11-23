@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
+from .choices_types import ProfileRoles
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
@@ -203,10 +204,21 @@ class PropertiesWithoutContactPersonAPIView(RoleMixin, PropertyMixin, APIView):
 
 
 class ActivateSpecificMemberAPIView(APIView):
-    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator,)
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
 
     def put(self, request, *args, **kwargs):
         if user := User.objects.filter(id=kwargs['pk']).first():
             user.activate_user()
             return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
         return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="List of roles below the auth user's role"
+))
+class RolesListAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
+
+    def get(self, request, *args, **kwargs):
+        role = request.auth['role']
+        return Response(dict((i[0], i[1]) for i in ProfileRoles.CHOICES if i[0] > role))
