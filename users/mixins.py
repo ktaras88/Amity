@@ -16,3 +16,10 @@ class PropertyMixin:
             case ProfileRoles.COORDINATOR:
                 return Building
         return None
+
+
+class BelowRolesListMixin:
+    def get_roles_list(self, request):
+        role = request.auth['role']
+        roles_list = list({'id': i[0], 'name': i[1]} for i in ProfileRoles.CHOICES if i[0] > role)
+        return roles_list

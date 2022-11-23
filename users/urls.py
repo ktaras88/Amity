@@ -3,7 +3,7 @@ from django.urls import path
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView, \
     UserGeneralInformationView, UserContactInformationView, UserPasswordInformationView, UsersRoleListAPIView, \
     GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView, \
-    ActivateSpecificMemberAPIView, RolesListAPIView
+    ActivateSpecificMemberAPIView, BelowRolesListAPIView
 
 app_name = 'users'
 
@@ -19,7 +19,7 @@ urlpatterns = [
     path('<int:pk>/general-info/', UserGeneralInformationView.as_view(), name='user-general-info'),
     path('<int:pk>/contact-info/', UserContactInformationView.as_view(), name='user-contact-info'),
     path('<int:pk>/password-info/', UserPasswordInformationView.as_view(), name='user-password-info'),
-    path('roles/', RolesListAPIView.as_view(), name='roles-list'),
+    path('roles/', BelowRolesListAPIView.as_view(), name='roles-list'),
     path('role-list/<str:role>/', UsersRoleListAPIView.as_view(), name='users-role-list'),
     path('property-list/<str:role>/', PropertiesWithoutContactPersonAPIView.as_view(), name='property-list'),
 ]

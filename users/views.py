@@ -16,7 +16,7 @@ from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
     UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer
-from .mixins import PropertyMixin, RoleMixin
+from .mixins import PropertyMixin, RoleMixin, BelowRolesListMixin
 
 User = get_user_model()
 
@@ -216,10 +216,9 @@ class ActivateSpecificMemberAPIView(APIView):
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="List of roles below the auth user's role"
 ))
-class RolesListAPIView(APIView):
+class BelowRolesListAPIView(BelowRolesListMixin, APIView):
     permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
 
     def get(self, request, *args, **kwargs):
-        role = request.auth['role']
-        roles_list = dict((i[0], i[1]) for i in ProfileRoles.CHOICES if i[0] > role)
-        return Response({'roles_list': roles_list})
+        roles_list = self.get_roles_list(request)
+        return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)

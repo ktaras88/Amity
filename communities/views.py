@@ -20,6 +20,7 @@ from buildings.models import Building
 from users.choices_types import ProfileRoles
 from users.filters import CommunityMembersFilter
 from users.mixins import PropertyMixin
+from users.views import BelowRolesListAPIView
 from .models import Community, RecentActivity
 from .serializers import CommunitiesListSerializer, CommunitySerializer, \
     CommunityViewSerializer, CommunityLogoSerializer, CommunityEditSerializer, RecentActivitySerializer, \
@@ -300,3 +301,25 @@ class InactivateSpecificMemberAPIView(APIView):
             user.buildings.update(contact_person=None)
             return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
         return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="List of free roles in community below the auth user's role"
+))
+class BelowRolesWithFreePropertiesListAPIView(BelowRolesListAPIView):
+    def property_list(self, model, filter_name):
+        return model.objects.values('id', 'name').filter(**filter_name, contact_person__isnull=True)
+
+    def get(self, request, pk, *args, **kwargs):
+        roles_list = self.get_roles_list(request)
+        for role in roles_list[:]:
+            if role['id'] == ProfileRoles.SUPERVISOR:
+                communities_list = self.property_list(Community, {'pk': pk})
+                role['communities_list'] = communities_list if communities_list else roles_list.remove(role)
+
+            elif role['id'] == ProfileRoles.COORDINATOR:
+                buildings_list = self.property_list(Building, {'community_id': pk})
+                role['buildings_list'] = buildings_list if buildings_list else roles_list.remove(role)
+                break
+
+        return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
