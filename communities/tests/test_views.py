@@ -934,6 +934,7 @@ class BelowRolesWithFreePropertiesListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 3)
+        self.assertEqual(len(response.data['roles_list'][0]['buildings_list']), 3)
 
     def test_community_roles_list_for_amity_admin_there_is_no_supervisor_in_community(self):
         self.url2 = reverse('v1.0:communities:community-free-roles', args=[self.com2.id])
@@ -942,6 +943,14 @@ class BelowRolesWithFreePropertiesListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url2)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 4)
+
+    def test_community_roles_list_for_amity_admin_there_is_no_buildings_in_community(self):
+        self.url3 = reverse('v1.0:communities:community-free-roles', args=[self.com3.id])
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.get(self.url3)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['roles_list']), 3)
 
     def test_community_roles_list_for_supervisor_contact_person(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong2'})
