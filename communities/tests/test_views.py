@@ -765,7 +765,7 @@ class InactivateAPIViewTestCase(APITestCase):
                                               first_name='AAA', last_name='BBB',
                                               role=ProfileRoles.SUPERVISOR)
         self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
-                                            contact_person=self.user2, phone_number=1230456204, safety_status=True)
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
         self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
                                               address='address1', contact_person=self.user1, phone_number=1234567)
         self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AZ',
