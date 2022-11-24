@@ -958,3 +958,48 @@ class BelowRolesWithFreePropertiesListAPIViewTestCase(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['roles_list']), 3)
+
+
+class CommunityUnassignContactPersonAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+                                                  first_name='Fsuper', last_name='Lastsuper')
+        self.user1 = User.objects.create_user(email='user1@user.com', password='strong1',
+                                              first_name='First User1', last_name='Last User1',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user2 = User.objects.create_user(email='user2@user.com', password='strong2',
+                                              first_name='First User2', last_name='Last User2',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong3',
+                                              first_name='First User3', last_name='Last User3',
+                                              role=ProfileRoles.COORDINATOR)
+        self.community = Community.objects.create(name='community1', state='AL', zip_code=1234, address='address1',
+                                                   contact_person=self.user2, phone_number=1234567)
+        self.url = reverse('v1.0:communities:community-unissign-contact-person', args=[self.community.id])
+
+    def test_community_unassign_contact_person_permission_no_access_for_coordinator(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong3'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_community_unassign_contact_person_permission_no_access_for_supervisor_not_contact_person(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user1@user.com', 'password': 'strong1'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_community_unassign_contact_person_permission_for_supervisor_contact_person(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user2@user.com', 'password': 'strong2'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Community.objects.values_list('contact_person').filter(pk=self.community.id)[0][0], None)
+
+    def test_community_unassign_contact_person_permission_for_amity_administrator(self):
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Community.objects.values_list('contact_person').filter(pk=self.community.id)[0][0], None)

@@ -3,7 +3,8 @@ from django.urls import path
 from .views import SearchPredictionsAPIView, SupervisorDataAPIView, \
     StatesListAPIView, SwitchCommunitySafetyLockAPIView, CommunitiesViewSet, CommunityAPIView, CommunityLogoAPIView, \
     RecentActivityAPIView, CommunityMembersListAPIView, MembersSearchPredictionsAPIView, DetailMemberPageAPIView, \
-    DetailMemberPageAccessListAPIView, InactivateSpecificMemberAPIView, BelowRolesWithFreePropertiesListAPIView
+    DetailMemberPageAccessListAPIView, InactivateSpecificMemberAPIView, BelowRolesWithFreePropertiesListAPIView, \
+    CommunityUnassignContactPersonAPIView
 
 app_name = 'communities'
 
@@ -16,6 +17,7 @@ urlpatterns = [
     path('<int:pk>/members/<int:member_pk>/inactivate/', InactivateSpecificMemberAPIView.as_view(), name='inactivate-member'),
     path('<int:pk>/members-search-predictions/', MembersSearchPredictionsAPIView.as_view(), name='members-search-predictions'),
     path('<int:pk>/logo/', CommunityLogoAPIView.as_view(), name='community-logo'),
+    path('<int:pk>/unissign-contact-person/', CommunityUnassignContactPersonAPIView.as_view(), name='community-unissign-contact-person'),
     path('search-predictions/', SearchPredictionsAPIView.as_view(), name='search-predictions'),
     path('supervisor-data/', SupervisorDataAPIView.as_view(), name='supervisor-data'),
     path('states/', StatesListAPIView.as_view(), name='states-list'),
