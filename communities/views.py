@@ -315,12 +315,12 @@ class BelowRolesWithFreePropertiesListAPIView(BelowRolesListMixin, APIView):
         roles_list = self.get_roles_list(request)
         for role in roles_list[:]:
             if role['id'] == ProfileRoles.SUPERVISOR:
-                communities_list = self.property_list(Community, {'pk': pk})
-                role['communities_list'] = communities_list if communities_list else roles_list.remove(role)
+                property_list = self.property_list(Community, {'pk': pk})
+                role['property_list'] = property_list if property_list else roles_list.remove(role)
 
             elif role['id'] == ProfileRoles.COORDINATOR:
-                buildings_list = self.property_list(Building, {'community_id': pk})
-                role['buildings_list'] = buildings_list if buildings_list else roles_list.remove(role)
+                property_list = self.property_list(Building, {'community_id': pk})
+                role['property_list'] = property_list if property_list else roles_list.remove(role)
                 break
 
         return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
