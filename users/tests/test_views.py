@@ -415,7 +415,7 @@ class NewMemberAPIViewTestCase(APITestCase):
         self.url = reverse('v1.0:users:create-new-member')
 
         self.data = {
-            'email': 'site.vizit@gmail.com',
+            'email': 'test@test.com',
             'first_name': 'First User3',
             'last_name': 'Last User3',
             'address': 'User address',
