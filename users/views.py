@@ -13,8 +13,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTToken
 from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
-    CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
-    UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer
+    CreateNewPasswordSerializer, UserAvatarSerializer, UserProfileInformationSerializer,\
+    UserPasswordInformationSerializer, MemberSerializer
 from .mixins import PropertyMixin, RoleMixin
 
 User = get_user_model()
@@ -110,26 +110,13 @@ class UserAvatarAPIView(RetrieveUpdateDestroyAPIView):
 
 
 @method_decorator(name='get', decorator=swagger_auto_schema(
-    operation_summary="Retrieve user general information"
+    operation_summary="Retrieve user profile information"
 ))
 @method_decorator(name='put', decorator=swagger_auto_schema(
-    operation_summary="Change user general information"
+    operation_summary="Change user profile information"
 ))
-class UserGeneralInformationView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserGeneralInformationSerializer
-    queryset = User.objects.all()
-    permission_classes = (IsOwnerNotForResident,)
-    http_method_names = ["put", "get"]
-
-
-@method_decorator(name='get', decorator=swagger_auto_schema(
-    operation_summary="Retrieve user contact information"
-))
-@method_decorator(name='put', decorator=swagger_auto_schema(
-    operation_summary="Change user contact information"
-))
-class UserContactInformationView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserContactInformationSerializer
+class UserProfileInformationAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserProfileInformationSerializer
     queryset = User.objects.all()
     permission_classes = (IsOwnerNotForResident,)
     http_method_names = ["put", "get"]
