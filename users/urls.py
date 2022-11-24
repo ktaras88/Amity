@@ -2,12 +2,12 @@ from django.urls import path
 
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView, \
     UserGeneralInformationView, UserContactInformationView, UserPasswordInformationView, UsersRoleListAPIView, \
-    GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView
+    GetAuthenticatedUserIdAPIView, MembersAPIView, PropertiesWithoutContactPersonAPIView
 
 app_name = 'users'
 
 urlpatterns = [
-    path('', NewMemberAPIView.as_view(), name='create-new-member'),
+    path('', MembersAPIView.as_view(), name='members-list'),
     path('forgot-password/', ResetPasswordRequestEmail.as_view(), name='forgot-password'),
     path('security-code/', ResetPasswordSecurityCode.as_view(), name='security-code'),
     path('get-authenticated-user-id/', GetAuthenticatedUserIdAPIView.as_view(), name='get-authenticated-user-id'),

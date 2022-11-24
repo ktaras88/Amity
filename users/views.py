@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Value
-from django.db.models.functions import Concat
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Value, Subquery, F
+from django.db.models.functions import Concat, Coalesce
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -11,10 +13,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
 from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
+from buildings.models import Building
+from communities.models import Community
+from .filters import CommunityMembersFilter
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
-    UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer
+    UserContactInformationSerializer, UserPasswordInformationSerializer, MemberSerializer, MembersListSerializer
 from .mixins import PropertyMixin, RoleMixin
 
 User = get_user_model()
@@ -170,13 +175,37 @@ class GetAuthenticatedUserIdAPIView(APIView):
         return Response({'user_id': request.user.id}, status=status.HTTP_200_OK)
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Get all the members in system"
+))
 @method_decorator(name='create', decorator=swagger_auto_schema(
     operation_summary="Create new member"
 ))
-class NewMemberAPIView(PropertyMixin, generics.CreateAPIView):
+class MembersAPIView(PropertyMixin, generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
     serializer_class = MemberSerializer
+
+    filter_backends = [OrderingFilter, SearchFilter]
+    filterset_class = CommunityMembersFilter
+    ordering_fields = ['full_name']
+    ordering = ['is_active', 'full_name']
+    search_fields = ['full_name']
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            query = User.objects.prefetch_related('buildings').\
+                values('email', 'phone_number').\
+                annotate(full_name=Concat('first_name', Value(' '), 'last_name'), role=F('profile__role'),
+                         buildings_list=ArrayAgg('buildings__name', distinct=True),
+                         communities_list=ArrayAgg('communities__name', distinct=True))
+        else:
+            return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return MembersListSerializer
+        return MemberSerializer
 
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)

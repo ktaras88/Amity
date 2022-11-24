@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError, AuthenticationFailed as D
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as SimpleJWTTokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 
+from .choices_types import ProfileRoles
 from .models import InvitationToken, Profile
 from .validators import phone_regex
 
@@ -128,7 +129,7 @@ class UserGeneralInformationSerializer(serializers.ModelSerializer):
 
     def get_role(self, obj):
         role = self.context['request'].auth['role']
-        return role
+        return dict(ProfileRoles.CHOICES)[role]
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data['first_name']
@@ -197,3 +198,18 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'property']
+
+
+class MembersListSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    full_name = serializers.CharField()
+    buildings_list = serializers.ListField()
+    communities_list = serializers.ListField()
+
+    class Meta:
+        model = User
+        fields = ['avatar', 'avatar_coord', 'full_name', 'email', 'phone_number', 'role',
+                  'buildings_list', 'communities_list']
+
+    def get_role(self, role):
+        return dict(ProfileRoles.CHOICES)[role]

@@ -412,7 +412,7 @@ class NewMemberAPIViewTestCase(APITestCase):
         self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
                                               address='address3', phone_number=7654321)
 
-        self.url = reverse('v1.0:users:create-new-member')
+        self.url = reverse('v1.0:users:members-list')
 
         self.data = {
             'email': 'site.vizit@gmail.com',
