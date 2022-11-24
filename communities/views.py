@@ -308,7 +308,8 @@ class InactivateSpecificMemberAPIView(APIView):
 class BelowRolesWithFreePropertiesListAPIView(BelowRolesListMixin, APIView):
     permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
 
-    def property_list(self, model, filter_name):
+    @staticmethod
+    def property_list(model, filter_name):
         return model.objects.values('id', 'name').filter(**filter_name, contact_person__isnull=True)
 
     def get(self, request, pk, *args, **kwargs):
