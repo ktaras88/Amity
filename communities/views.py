@@ -225,9 +225,11 @@ class CommunityMembersListAPIView(PropertyMixin, generics.ListCreateAPIView):
         return CommunityMemberSerializer
 
     def perform_create(self, serializer):
-        user = User.objects.create_user(**dict((lambda property, **kw: kw)(**serializer.validated_data)))
-        property_id = serializer.validated_data['property']
-        if model := self.get_property_model_by_role(serializer.validated_data['role']):
+        user_data = dict(serializer.validated_data)
+        property_id = user_data['property']
+        del user_data['property']
+        user = User.objects.create_user(**user_data)
+        if model := self.get_property_model_by_role(user_data['role']):
             model.objects.filter(id=property_id).update(contact_person=user)
 
 
@@ -322,6 +324,5 @@ class BelowRolesWithFreePropertiesListAPIView(BelowRolesListMixin, APIView):
             elif role['id'] == ProfileRoles.COORDINATOR:
                 property_list = self.property_list(Building, {'community_id': pk})
                 role['property_list'] = property_list if property_list else roles_list.remove(role)
-                break
 
         return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)

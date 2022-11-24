@@ -4,12 +4,14 @@ from users.choices_types import ProfileRoles
 
 
 class RoleMixin:
-    def get_role_id(self, role):
+    @staticmethod
+    def get_role_id(role):
         return next((key for key, value in dict(ProfileRoles.CHOICES).items() if value == role), None)
 
 
 class PropertyMixin:
-    def get_property_model_by_role(self, role_id):
+    @staticmethod
+    def get_property_model_by_role(role_id):
         match role_id:
             case ProfileRoles.SUPERVISOR:
                 return Community
@@ -19,7 +21,9 @@ class PropertyMixin:
 
 
 class BelowRolesListMixin:
-    def get_roles_list(self, request):
+    @staticmethod
+    def get_roles_list(request):
         role = request.auth['role']
-        roles_list = list({'id': i[0], 'name': i[1]} for i in ProfileRoles.CHOICES if i[0] > role)
+        roles_list = [{'id': role_key, 'name': role_name} for role_key, role_name in ProfileRoles.CHOICES
+                      if role_key > role]
         return roles_list
