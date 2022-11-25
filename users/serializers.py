@@ -211,5 +211,5 @@ class MembersListSerializer(serializers.ModelSerializer):
         fields = ['avatar', 'avatar_coord', 'full_name', 'email', 'phone_number', 'role',
                   'buildings_list', 'communities_list']
 
-    def get_role(self, role):
-        return dict(ProfileRoles.CHOICES)[role]
+    def get_role(self, queryset):
+        return dict(ProfileRoles.CHOICES)[queryset['role']]

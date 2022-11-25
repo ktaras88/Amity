@@ -189,16 +189,17 @@ class MembersAPIView(PropertyMixin, generics.ListCreateAPIView):
     filter_backends = [OrderingFilter, SearchFilter]
     filterset_class = CommunityMembersFilter
     ordering_fields = ['full_name']
-    ordering = ['is_active', 'full_name']
+    ordering = ['-is_active', 'full_name']
     search_fields = ['full_name']
 
     def get_queryset(self):
         if self.request.method == 'GET':
-            query = User.objects.prefetch_related('buildings').\
+            query = User.objects.select_related('buildings').\
                 values('email', 'phone_number').\
                 annotate(full_name=Concat('first_name', Value(' '), 'last_name'), role=F('profile__role'),
                          buildings_list=ArrayAgg('buildings__name', distinct=True),
                          communities_list=ArrayAgg('communities__name', distinct=True))
+            return query
         else:
             return super().get_queryset()
 
