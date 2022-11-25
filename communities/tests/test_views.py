@@ -976,7 +976,7 @@ class CommunityUnassignContactPersonAPIViewTestCase(APITestCase):
                                               role=ProfileRoles.COORDINATOR)
         self.community = Community.objects.create(name='community1', state='AL', zip_code=1234, address='address1',
                                                    contact_person=self.user2, phone_number=1234567)
-        self.url = reverse('v1.0:communities:community-unissign-contact-person', args=[self.community.id])
+        self.url = reverse('v1.0:communities:community-unassign-contact-person', args=[self.community.id])
 
     def test_community_unassign_contact_person_permission_no_access_for_coordinator(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong3'})

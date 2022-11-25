@@ -111,7 +111,7 @@ class BuildingUnassignContactPersonAPIViewTestCase(APITestCase):
                                                    contact_person=self.user2, phone_number=1234567)
         self.build = Building.objects.create(community_id=self.community.id, name='building1', state='AL',
                                               address='address1', contact_person=self.user3, phone_number=1234567)
-        self.url = reverse('v1.0:buildings:building-unissign-contact-person', args=[self.community.id, self.build.id])
+        self.url = reverse('v1.0:buildings:building-unassign-contact-person', args=[self.community.id, self.build.id])
 
     def test_building_unassign_contact_person_permission_no_access_for_coordinator(self):
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user3@user.com', 'password': 'strong3'})
