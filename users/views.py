@@ -17,6 +17,7 @@ from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenOb
     UserPasswordInformationSerializer, MemberSerializer
 from .mixins import PropertyMixin, RoleMixin
 
+
 User = get_user_model()
 
 
@@ -190,10 +191,21 @@ class PropertiesWithoutContactPersonAPIView(RoleMixin, PropertyMixin, APIView):
 
 
 class ActivateSpecificMemberAPIView(APIView):
-    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator,)
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
 
     def put(self, request, *args, **kwargs):
         if user := User.objects.filter(id=kwargs['pk']).first():
             user.activate_user()
             return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
         return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="List of roles below the auth user's role"
+))
+class BelowRolesListAPIView(BelowRolesListMixin, APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
+
+    def get(self, request, *args, **kwargs):
+        roles_list = self.get_roles_list(request)
+        return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
