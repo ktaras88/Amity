@@ -2,7 +2,8 @@ from django.urls import path
 
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView, \
     UserProfileInformationAPIView, UserPasswordInformationView, UsersRoleListAPIView, \
-    GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView, BelowRolesListAPIView
+    GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView, BelowRolesListAPIView, \
+    ActivateSpecificMemberAPIView, InactivateSpecificMemberAPIView
 
 app_name = 'users'
 
