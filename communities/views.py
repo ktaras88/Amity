@@ -326,3 +326,14 @@ class BelowRolesWithFreePropertiesListAPIView(BelowRolesListMixin, APIView):
                 role['property_list'] = property_list if property_list else roles_list.remove(role)
 
         return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
+
+
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Unassign member from specific community"
+))
+class CommunityUnassignContactPersonAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+
+    def put(self, request, pk, *args, **kwargs):
+        Community.objects.filter(id=pk).update(contact_person=None)
+        return Response(status=status.HTTP_200_OK)

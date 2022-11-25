@@ -2,7 +2,9 @@ from django.db.models import Value, CharField
 from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins
+from rest_framework import mixins, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from amity_api.permission import IsAmityAdministratorOrCommunityContactPerson
@@ -40,3 +42,14 @@ class BuildingViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, GenericVie
     def create(self, request, *args, **kwargs):
         request.data['community_id'] = self.kwargs['pk']
         return super().create(request, *args, **kwargs)
+
+
+@method_decorator(name='put', decorator=swagger_auto_schema(
+    operation_summary="Unassign member from specific building"
+))
+class BuildingUnassignContactPersonAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrCommunityContactPerson, )
+
+    def put(self, request, pk, *args, **kwargs):
+        Building.objects.filter(id=pk).update(contact_person=None)
+        return Response(status=status.HTTP_200_OK)
