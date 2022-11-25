@@ -15,8 +15,7 @@ from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserProfileInformationSerializer,\
     UserPasswordInformationSerializer, MemberSerializer
-from .mixins import PropertyMixin, RoleMixin
-
+from .mixins import PropertyMixin, RoleMixin, BelowRolesListMixin
 
 User = get_user_model()
 
