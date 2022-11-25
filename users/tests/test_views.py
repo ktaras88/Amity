@@ -470,8 +470,7 @@ class MembersAPIViewTestCase(APITestCase):
 
     def test_ensure_active_members_are_on_top_of_list(self):
         response = self.client.get(self.url)
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_order = [item['full_name'] for item in response.data['results']]
-        expected_order = [str(self.user), str(self.user1), str(self.user2), str(self.user3), str(self.user4)]
+        expected_order = [str(self.user1), str(self.user2), str(self.user3), str(self.user), str(self.user4)]
         self.assertEqual(response_order, expected_order)
