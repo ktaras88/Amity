@@ -494,3 +494,45 @@ class ActivateAPIViewTestCase(APITestCase):
         response = client.put(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+
+class InactivateMemberPageAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user01@user1.user1', password='M@rkHami11',
+                                              first_name='Mark', last_name='Hamill',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user2 = User.objects.create_user(email='user02@user2.user2', password='M@rkHami22',
+                                              first_name='AAA', last_name='BBB',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AZ',
+                                              address='address2', contact_person=self.user2, phone_number=7654321)
+        self.url = reverse('v1.0:users:inactivate-member', kwargs={'pk': self.user1.id})
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@admin.admin', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_inactivation_user_and_removing_related_contact_person(self):
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['is_active'], User.objects.get(id=self.user1.id).is_active)
+        self.assertFalse(Community.objects.get(id=self.com.id).contact_person)
+        self.assertFalse(Building.objects.get(id=self.build1.id).contact_person)
+
+    def test_inactivation_without_permission_not_work(self):
+        user10 = User.objects.create_user(email='user010@user10.user10', password='M@rkHami100',
+                                          first_name='Mark00', last_name='Hamill00',
+                                          role=ProfileRoles.COORDINATOR)
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user010@user10.user10', 'password': 'M@rkHami100'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        url = reverse('v1.0:users:inactivate-member', kwargs={'pk': user10.id})
+        response = client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')

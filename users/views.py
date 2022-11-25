@@ -10,7 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
+from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator, \
+    IsAmityAdministratorOrSupervisor
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserGeneralInformationSerializer, \
@@ -208,5 +209,17 @@ class ActivateSpecificMemberAPIView(APIView):
     def put(self, request, *args, **kwargs):
         if user := User.objects.filter(id=kwargs['pk']).first():
             user.activate_user()
+            return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
+        return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InactivateSpecificMemberAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+
+    def put(self, request, *args, **kwargs):
+        if user := User.objects.filter(id=kwargs['pk']).first():
+            user.inactivate_user()
+            user.communities.update(contact_person=None)
+            user.buildings.update(contact_person=None)
             return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
         return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
