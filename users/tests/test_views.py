@@ -316,17 +316,18 @@ class UserContactInformationTestCase(APITestCase):
 class UserPasswordInformationTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+        self.user = User.objects.create_superuser(email='super@super.super', password='jG9264*jgu086',
                                                   first_name='Fsuper', last_name='Lastsuper')
         self.url = reverse('v1.0:users:user-password-info', args=[self.user.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
+                                                                   'password': 'jG9264*jgu086'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
         self.user1 = User.objects.create_user(email='jim@parsons.art', password='j1mp@Rs*ns',
                                               first_name='Jim', last_name='Parsons')
 
     def test_ensure_password_change_is_valid(self):
-        data = {'old_password': 'strong', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
+        data = {'old_password': 'jG9264*jgu086', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -337,10 +338,16 @@ class UserPasswordInformationTestCase(APITestCase):
         self.assertEqual(response.data['old_password']['old_password'], "Old password is not correct")
 
     def test_ensure_new_password_and_password_repeat_not_same(self):
-        data = {'old_password': 'strong', 'password': '12Jsirvm&*kn', 'password2': '12Jsirvm&*k'}
+        data = {'old_password': 'jG9264*jgu086', 'password': '12Jsirvm&*kn', 'password2': '12Jsirvm&*k'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], 'Password fields didn\'t match.')
+
+    def test_ensure_old_password_not_used_as_new(self):
+        data = {'old_password': 'jG9264*jgu086', 'password': 'jG9264*jgu086', 'password2': 'jG9264*jgu086'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], 'This password can\'t be used.')
 
 
 class UsersRoleListAPIViewTestCase(APITestCase):

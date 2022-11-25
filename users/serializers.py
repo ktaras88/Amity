@@ -173,6 +173,8 @@ class UserPasswordInformationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({'password': "Password fields didn't match."})
+        if attrs['password'] == attrs['old_password']:
+            raise serializers.ValidationError({'password': "This password can't be used."})
 
         return attrs
 
