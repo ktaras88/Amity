@@ -1,7 +1,7 @@
 from django.urls import path
 
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView, \
-    UserGeneralInformationView, UserContactInformationView, UserPasswordInformationView, UsersRoleListAPIView, \
+    UserProfileInformationAPIView, UserPasswordInformationView, UsersRoleListAPIView, \
     GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView, \
     ActivateSpecificMemberAPIView, BelowRolesListAPIView
 
@@ -16,8 +16,7 @@ urlpatterns = [
     path('new-security-code/', ResetPasswordRequestEmail.as_view(), name='new-security-code'),
     path('create-new-password/', CreateNewPassword.as_view(), name='create-new-password'),
     path('<int:pk>/avatar/', UserAvatarAPIView.as_view(), name='user-avatar'),
-    path('<int:pk>/general-info/', UserGeneralInformationView.as_view(), name='user-general-info'),
-    path('<int:pk>/contact-info/', UserContactInformationView.as_view(), name='user-contact-info'),
+    path('<int:pk>/profile-info/', UserProfileInformationAPIView.as_view(), name='profile-info'),
     path('<int:pk>/password-info/', UserPasswordInformationView.as_view(), name='user-password-info'),
     path('roles/', BelowRolesListAPIView.as_view(), name='roles-list'),
     path('role-list/<str:role>/', UsersRoleListAPIView.as_view(), name='users-role-list'),
