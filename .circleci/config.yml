@@ -1,0 +1,189 @@
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@2.0.6
+  aws-ecr: circleci/aws-ecr@7.3.0
+
+# CircleCI needs variables:
+# AWS_DEFAULT_REGION, AWS_ECR_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
+# PROD_TARGET_GROUP, STAGING_TARGET_GROUP, QA_TARGET_GROUP
+# PROJECT_NAME
+
+jobs:
+
+  build_docker_images:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - setup_remote_docker
+      - aws-cli/install
+      - run:
+          name: Login into aws ecr
+          command: aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
+      - run:
+          name: Set ENV
+          command: |
+            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+              echo "export ENV=$CIRCLE_BRANCH" >> $BASH_ENV
+            else
+              echo "export ENV=temporary-storage" >> $BASH_ENV
+            fi
+      - aws-ecr/build-and-push-image:
+          checkout: false
+          attach-workspace: true
+          account-url: AWS_ECR_ID
+          dockerfile: deployment/Dockerfile
+          path: .
+          repo: "${ENV}-${PROJECT_NAME}"
+          region: AWS_DEFAULT_REGION
+          tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
+
+
+  # #run_unit_tests:
+  #   parameters:
+  #     environment:
+  #       default: "temporary-storage"
+  #       type: string
+  #   machine:
+  #         image: ubuntu-2004:202111-02
+  #   steps:
+  #     - checkout
+  #     - aws-cli/install
+  #     - run:
+  #         name: Pull variables
+  #         command: |
+  #           apt update && apt install -y jq
+  #           if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+  #             aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
+  #           else
+  #             aws secretsmanager get-secret-value --secret-id "qa/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
+  #           fi
+  #     - run:
+  #         name: Run unit tests
+  #         command: |
+  #           set -ex
+  #           export IMAGE_NAME='${AWS_ECR_ID}/<<parameters.environment>>-gbd-talent:backend-<<pipeline.number>>-${CIRCLE_SHA1}'
+  #           sed -i "s@IMAGE_NAME@${IMAGE_NAME}@" deploy/unit-tests/docker-compose.yml
+  #           cd deploy/unit-tests/
+  #           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
+  #           docker-compose up -d
+  #           docker exec -it backend bash -c 'set -ex && coverage run --source='.' -m pytest --junitxml=test-count.xml && coverage xml'
+      
+
+  check_main_branch:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - aws-cli/install
+      - run:
+          name: Deleting docker images from AWS ECR
+          command: |
+            if !([ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]); then
+              aws ecr batch-delete-image --repository-name "temporary-storage-${PROJECT_NAME}" --image-ids imageTag=backend-<<pipeline.number>>-${CIRCLE_SHA1} --region $AWS_DEFAULT_REGION
+            else
+              echo "This is main branch, it will be safed on AWS ECR"
+            fi
+
+
+  # AWS RDS
+  run_database_migrations:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - aws-cli/install
+      - run:
+          name: Run database Migrations
+          command: |
+              set -e
+              cd deployment/migrations
+              export TAG='backend-<<pipeline.number>>-${CIRCLE_SHA1}'
+              sed -i "s@TAG@$TAG@" migrations.sh
+              chmod +x migrations.sh
+              bash migrations.sh
+
+  deploy_the_aplication:
+    machine:
+        image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - aws-cli/install
+      - run:
+          name: Deploy
+          no_output_timeout: 30m
+          command: |
+            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+              sudo apt-get install moreutils
+              export TARGET_GROUP_ARN=TARGET_GROUP_ARN_${CIRCLE_BRANCH^^}
+              export TAG=<<pipeline.number>>-${CIRCLE_SHA1}
+              aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
+              jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/.env
+              export $(cat deployment/.env | grep -v '#' | awk '/=/ {print $1}')
+              envsubst < deployment/docker-compose.yml | sponge deployment/docker-compose.yml
+              envsubst < deployment/ecs-params.yml | sponge deployment/ecs-params.yml
+              sed -i 's/""/"\n        - "/g' deployment/ecs-params.yml
+              curl -o ./ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
+              chmod +x ./ecs-cli
+              ./ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --profile-name default
+              ./ecs-cli configure --cluster $CIRCLE_BRANCH-$PROJECT_NAME --region $AWS_DEFAULT_REGION --default-launch-type FARGATE
+              ./ecs-cli compose -f deployment/docker-compose.yml --ecs-params deployment/ecs-params.yml --project-name "$CIRCLE_BRANCH-$PROJECT_NAME" \
+                  service up --cluster-config default --target-group-arn ${!TARGET_GROUP_ARN} --container-name backend --container-port 8000 \
+                  --role ecsServiceRole --force-deployment --timeout 30
+            else
+              echo "This step is only for qa, staging, production branches"
+            fi          
+
+
+workflows:
+  version: 2
+  ci_cd:
+    jobs:
+      - build_docker_images
+
+      # - run_unit_tests:
+      #     requires:
+      #       - build_docker_images
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - production
+      #           - staging
+      #           - qa
+          
+      # - run_unit_tests:
+      #     name: run_unit_tests_main
+      #     environment: "${CIRCLE_BRANCH}"
+      #     requires:
+      #       - build_docker_images
+      #     filters:
+      #       branches:
+      #         only:
+      #           - qa
+      #           - staging
+      #           - production
+      
+      - check_main_branch:
+          requires:
+            - build_docker_images
+
+      - run_database_migrations:
+          requires:
+            - check_main_branch
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production
+
+      - deploy_the_aplication:
+          requires:
+            - run_database_migrations
+          filters:
+            branches:
+              only:
+                - qa
+                - staging
+                - production            
