@@ -1,0 +1,21 @@
+version: '3.0'
+
+services:
+  backend:
+    image: $AWS_ECR_ID/$CIRCLE_BRANCH-$PROJECT_NAME:backend-$TAG
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    command: python manage.py runserver 0.0.0.0:8000
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: /ecs/$CIRCLE_BRANCH-$PROJECT_NAME-backend
+        awslogs-region: $AWS_DEFAULT_REGION
+        awslogs-stream-prefix: $CIRCLE_BRANCH-backend
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
