@@ -2,14 +2,13 @@ from django.urls import path
 
 from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, CreateNewPassword, UserAvatarAPIView, \
     UserProfileInformationAPIView, UserPasswordInformationView, UsersRoleListAPIView, \
-    GetAuthenticatedUserIdAPIView, NewMemberAPIView, PropertiesWithoutContactPersonAPIView, BelowRolesListAPIView, \
+    GetAuthenticatedUserIdAPIView, MembersAPIView, PropertiesWithoutContactPersonAPIView, BelowRolesListAPIView, \
     ActivateSpecificMemberAPIView, InactivateSpecificMemberAPIView
 
 app_name = 'users'
 
 urlpatterns = [
     path('', MembersAPIView.as_view(), name='members-list'),
-    path('', NewMemberAPIView.as_view(), name='create-new-member'),
     path('<int:pk>/activate/', ActivateSpecificMemberAPIView.as_view(), name='activate-member'),
     path('<int:pk>/inactivate/', InactivateSpecificMemberAPIView.as_view(), name='inactivate-member'),
     path('forgot-password/', ResetPasswordRequestEmail.as_view(), name='forgot-password'),
