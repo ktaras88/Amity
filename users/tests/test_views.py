@@ -383,17 +383,23 @@ class UsersRoleListAPIViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class NewMemberAPIViewTestCase(APITestCase):
+class MembersAPIViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
                                                   first_name='Fsuper', last_name='Lastsuper')
         self.user1 = User.objects.create_user(email='user1@user.com', password='strong1',
                                               first_name='First User1', last_name='Last User1',
-                                              role=ProfileRoles.SUPERVISOR)
+                                              role=ProfileRoles.SUPERVISOR, is_active=True)
         self.user2 = User.objects.create_user(email='user2@user.com', password='strong2',
                                               first_name='First User2', last_name='Last User2',
-                                              role=ProfileRoles.OBSERVER)
+                                              role=ProfileRoles.OBSERVER, is_active=True)
+        self.user3 = User.objects.create_user(email='user3@user.com', password='strong3',
+                                              first_name='First User3', last_name='Last User3',
+                                              role=ProfileRoles.RESIDENT, is_active=True)
+        self.user4 = User.objects.create_user(email='user4@user.com', password='strong4',
+                                              first_name='First User4', last_name='Last User4',
+                                              role=ProfileRoles.RESIDENT, is_active=False)
         self.com = Community.objects.create(name='Davida', state='DC', zip_code=1111, address='davida_address',
                                             phone_number=1230456204, safety_status=True)
         self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='DC',
@@ -403,7 +409,7 @@ class NewMemberAPIViewTestCase(APITestCase):
         self.build3 = Building.objects.create(community_id=self.com.id, name='building3', state='DC',
                                               address='address3', phone_number=7654321)
 
-        self.url = reverse('v1.0:users:create-new-member')
+        self.url = reverse('v1.0:users:members-list')
 
         self.data = {
             'email': 'test@test.com',
@@ -449,6 +455,13 @@ class NewMemberAPIViewTestCase(APITestCase):
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['role'][0], 'This field is required.')
+
+    def test_ensure_active_members_are_on_top_of_list(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_order = [item['full_name'] for item in response.data['results']]
+        expected_order = [str(self.user1), str(self.user2), str(self.user3), str(self.user), str(self.user4)]
+        self.assertEqual(response_order, expected_order)
 
 
 class ActivateAPIViewTestCase(APITestCase):

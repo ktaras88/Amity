@@ -8,6 +8,7 @@ from users.views import ResetPasswordRequestEmail, ResetPasswordSecurityCode, Cr
 app_name = 'users'
 
 urlpatterns = [
+    path('', MembersAPIView.as_view(), name='members-list'),
     path('', NewMemberAPIView.as_view(), name='create-new-member'),
     path('<int:pk>/activate/', ActivateSpecificMemberAPIView.as_view(), name='activate-member'),
     path('<int:pk>/inactivate/', InactivateSpecificMemberAPIView.as_view(), name='inactivate-member'),
