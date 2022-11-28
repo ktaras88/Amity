@@ -3,6 +3,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Value, Subquery, F
 from django.db.models.functions import Concat, Coalesce
 from django.utils.decorators import method_decorator
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -175,8 +176,9 @@ class MembersAPIView(PropertyMixin, generics.ListCreateAPIView):
     permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
     serializer_class = MemberSerializer
 
-    filter_backends = [OrderingFilter, SearchFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = CommunityMembersFilter
+    filterset_fields = ['full_name']
     ordering_fields = ['full_name']
     ordering = ['-is_active', 'full_name']
     search_fields = ['full_name']
