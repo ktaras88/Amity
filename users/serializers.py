@@ -120,33 +120,18 @@ class UserAvatarSerializer(serializers.ModelSerializer):
         fields = ['avatar', 'avatar_coord']
 
 
-class UserGeneralInformationSerializer(serializers.ModelSerializer):
+class UserProfileInformationSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(validators=[phone_regex])
     role = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'role']
+        fields = ['first_name', 'last_name', 'role', 'email', 'phone_number']
+        read_only_fields = ('email',)
 
     def get_role(self, obj):
         role = self.context['request'].auth['role']
         return dict(ProfileRoles.CHOICES)[role]
-
-    def update(self, instance, validated_data):
-        instance.first_name = validated_data['first_name']
-        instance.last_name = validated_data['last_name']
-
-        instance.save()
-
-        return instance
-
-
-class UserContactInformationSerializer(serializers.ModelSerializer):
-    phone_number = serializers.CharField(validators=[phone_regex])
-
-    class Meta:
-        model = User
-        fields = ['email', 'phone_number']
-        read_only_fields = ('email',)
 
     def validate_phone_number(self, value):
         user = self.context['request'].user
@@ -155,6 +140,8 @@ class UserContactInformationSerializer(serializers.ModelSerializer):
         return value
 
     def update(self, instance, validated_data):
+        instance.first_name = validated_data['first_name']
+        instance.last_name = validated_data['last_name']
         instance.phone_number = validated_data['phone_number']
 
         instance.save()
@@ -174,6 +161,8 @@ class UserPasswordInformationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({'password': "Password fields didn't match."})
+        if attrs['password'] == attrs['old_password']:
+            raise serializers.ValidationError({'password': "This password can't be used."})
 
         return attrs
 

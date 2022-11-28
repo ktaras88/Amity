@@ -244,12 +244,12 @@ class CreateNewPasswordTestCase(APITestCase):
         self.assertEqual(response.data['password'][0], "The password must contain at least 1 digit, 0-9.")
 
 
-class UserGeneralInformationTestCase(APITestCase):
+class UserProfileInformationTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(email='super@super.super', password='strong',
                                                   first_name='Fsuper', last_name='Lastsuper')
-        self.url = reverse('v1.0:users:user-general-info', args=[self.user.id])
+        self.url = reverse('v1.0:users:profile-info', args=[self.user.id])
         res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
                                                                    'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
@@ -257,8 +257,8 @@ class UserGeneralInformationTestCase(APITestCase):
         self.user1 = User.objects.create_user(email='mark@hamill.act', password='M@rkHami11',
                                               first_name='Mark', last_name='Spencer')
 
-    def test_ensure_first_name_and_last_name_are_valid(self):
-        data = {'first_name': 'Mark', 'last_name': 'Hamill'}
+    def test_ensure_first_name_last_name_phone_number_are_valid(self):
+        data = {'first_name': 'Mark', 'last_name': 'Hamill', 'phone_number': '0669853245'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -290,25 +290,6 @@ class UserGeneralInformationTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['last_name'][0], "Ensure this field has no more than 100 characters.")
 
-
-class UserContactInformationTestCase(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
-                                                  first_name='Fsuper', last_name='Lastsuper')
-        self.url = reverse('v1.0:users:user-contact-info', args=[self.user.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
-                                                                   'password': 'strong'})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
-
-        self.user1 = User.objects.create_user(email='henry@kavill.act', password='HenryK@vi11',
-                                              first_name='Henry', last_name='Kavill')
-
-    def test_ensure_phone_number_is_valid(self):
-        data = {'phone_number': '0669853245'}
-        response = self.client.put(self.url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
     def test_ensure_phone_number_above_20_symbols_fails(self):
         data = {'phone_number': '0958552153095855215334'}
         response = self.client.put(self.url, data)
@@ -320,17 +301,18 @@ class UserContactInformationTestCase(APITestCase):
 class UserPasswordInformationTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_superuser(email='super@super.super', password='strong',
+        self.user = User.objects.create_superuser(email='super@super.super', password='jG9264*jgu086',
                                                   first_name='Fsuper', last_name='Lastsuper')
         self.url = reverse('v1.0:users:user-password-info', args=[self.user.id])
-        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super', 'password': 'strong'})
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'super@super.super',
+                                                                   'password': 'jG9264*jgu086'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
         self.user1 = User.objects.create_user(email='jim@parsons.art', password='j1mp@Rs*ns',
                                               first_name='Jim', last_name='Parsons')
 
     def test_ensure_password_change_is_valid(self):
-        data = {'old_password': 'strong', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
+        data = {'old_password': 'jG9264*jgu086', 'password': '12Jsirvm&*knv4', 'password2': '12Jsirvm&*knv4'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -341,10 +323,16 @@ class UserPasswordInformationTestCase(APITestCase):
         self.assertEqual(response.data['old_password']['old_password'], "Old password is not correct")
 
     def test_ensure_new_password_and_password_repeat_not_same(self):
-        data = {'old_password': 'strong', 'password': '12Jsirvm&*kn', 'password2': '12Jsirvm&*k'}
+        data = {'old_password': 'jG9264*jgu086', 'password': '12Jsirvm&*kn', 'password2': '12Jsirvm&*k'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], 'Password fields didn\'t match.')
+
+    def test_ensure_old_password_not_used_as_new(self):
+        data = {'old_password': 'jG9264*jgu086', 'password': 'jG9264*jgu086', 'password2': 'jG9264*jgu086'}
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['password'][0], 'This password can\'t be used.')
 
 
 class UsersRoleListAPIViewTestCase(APITestCase):
@@ -424,7 +412,7 @@ class MembersAPIViewTestCase(APITestCase):
         self.url = reverse('v1.0:users:members-list')
 
         self.data = {
-            'email': 'site.vizit@gmail.com',
+            'email': 'test@test.com',
             'first_name': 'First User3',
             'last_name': 'Last User3',
             'address': 'User address',
@@ -474,3 +462,81 @@ class MembersAPIViewTestCase(APITestCase):
         response_order = [item['full_name'] for item in response.data['results']]
         expected_order = [str(self.user1), str(self.user2), str(self.user3), str(self.user), str(self.user4)]
         self.assertEqual(response_order, expected_order)
+
+
+class ActivateAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user01@user1.user1', password='M@rkHami11',
+                                              first_name='Mark', last_name='Hamill',
+                                              role=ProfileRoles.COORDINATOR)
+        self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.url = reverse('v1.0:users:activate-member', kwargs={'pk': self.user1.id})
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@admin.admin', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_activation_user(self):
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['is_active'], User.objects.get(id=self.user1.id).is_active)
+
+    def test_activation_without_permission_not_work(self):
+        user10 = User.objects.create_user(email='user010@user10.user10', password='M@rkHami100',
+                                          first_name='Mark00', last_name='Hamill00',
+                                          role=ProfileRoles.RESIDENT)
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'),
+                          {'email': 'user010@user10.user10', 'password': 'M@rkHami100'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        url = reverse('v1.0:users:activate-member', kwargs={'pk': user10.id})
+        response = client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+
+class InactivateMemberPageAPIViewTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(email='admin@admin.admin', password='strong',
+                                                  first_name='First-super', last_name='Last-super')
+        self.user1 = User.objects.create_user(email='user01@user1.user1', password='M@rkHami11',
+                                              first_name='Mark', last_name='Hamill',
+                                              role=ProfileRoles.COORDINATOR)
+        self.user2 = User.objects.create_user(email='user02@user2.user2', password='M@rkHami22',
+                                              first_name='AAA', last_name='BBB',
+                                              role=ProfileRoles.SUPERVISOR)
+        self.com = Community.objects.create(name='Davida', state='AZ', zip_code=1111, address='davida_address',
+                                            contact_person=self.user1, phone_number=1230456204, safety_status=True)
+        self.build1 = Building.objects.create(community_id=self.com.id, name='building1', state='AZ',
+                                              address='address1', contact_person=self.user1, phone_number=1234567)
+        self.build2 = Building.objects.create(community_id=self.com.id, name='building2', state='AZ',
+                                              address='address2', contact_person=self.user2, phone_number=7654321)
+        self.url = reverse('v1.0:users:inactivate-member', kwargs={'pk': self.user1.id})
+        self.client = APIClient()
+        res = self.client.post(reverse('v1.0:token_obtain_pair'), {'email': 'admin@admin.admin', 'password': 'strong'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_inactivation_user_and_removing_related_contact_person(self):
+        response = self.client.put(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['is_active'], User.objects.get(id=self.user1.id).is_active)
+        self.assertFalse(Community.objects.get(id=self.com.id).contact_person)
+        self.assertFalse(Building.objects.get(id=self.build1.id).contact_person)
+
+    def test_inactivation_without_permission_not_work(self):
+        user10 = User.objects.create_user(email='user010@user10.user10', password='M@rkHami100',
+                                          first_name='Mark00', last_name='Hamill00',
+                                          role=ProfileRoles.COORDINATOR)
+        client = APIClient()
+        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user010@user10.user10', 'password': 'M@rkHami100'})
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+        url = reverse('v1.0:users:inactivate-member', kwargs={'pk': user10.id})
+        response = client.put(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
