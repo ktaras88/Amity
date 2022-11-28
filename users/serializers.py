@@ -209,7 +209,7 @@ class MembersListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar', 'avatar_coord', 'full_name', 'email', 'phone_number', 'role',
-                  'buildings_list', 'communities_list']
+                  'communities_list', 'buildings_list']
 
     def get_role(self, obj):
         return dict(ProfileRoles.CHOICES)[obj['role']]

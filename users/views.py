@@ -194,11 +194,10 @@ class MembersAPIView(PropertyMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.method == 'GET':
-            query = User.objects.select_related('buildings').\
-                values('email', 'phone_number').\
+            query = User.objects.values('avatar', 'avatar_coord', 'email', 'phone_number').\
                 annotate(full_name=Concat('first_name', Value(' '), 'last_name'), role=F('profile__role'),
-                         buildings_list=ArrayAgg('buildings__name', distinct=True),
-                         communities_list=ArrayAgg('communities__name', distinct=True))
+                         communities_list=ArrayAgg('communities__name', distinct=True),
+                         buildings_list=ArrayAgg('buildings__name', distinct=True))
             return query
         else:
             return super().get_queryset()
