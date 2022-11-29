@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.core import exceptions
+from django.contrib.auth.hashers import check_password
 import django.contrib.auth.password_validation as validators
 
 from django.contrib.auth.models import update_last_login
@@ -107,6 +108,8 @@ class CreateNewPasswordSerializer(serializers.Serializer):
             attr['email'] = token.user.email
         else:
             raise serializers.ValidationError({'error': "Invalid token."})
+        if check_password(attr['password'], token.user.password):
+            raise serializers.ValidationError({'error': "This password can not be used."})
         try:
             validators.validate_password(password=attr['password'])
         except exceptions.ValidationError as e:
