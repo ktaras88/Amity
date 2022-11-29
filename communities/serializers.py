@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from buildings.models import Building
 from users.choices_types import ProfileRoles
+from users.serializers import MemberSerializer
 from users.validators import phone_regex
 from .models import Community, RecentActivity
 
@@ -70,3 +71,7 @@ class DetailMemberPageAccessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Building
         fields = ['name', 'address', 'phone_number']
+
+
+class CommunityMemberSerializer(MemberSerializer):
+    property = serializers.IntegerField(required=True)
