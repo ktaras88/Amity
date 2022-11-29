@@ -107,7 +107,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
             attr['email'] = token.user.email
         else:
             raise serializers.ValidationError({'error': "Invalid token."})
-        if check_password(attr['password'], User.objects.get(email=attr['email']).password):
+        if check_password(attr['password'], token.user.password):
             raise serializers.ValidationError({'error': "This password can not be used."})
         try:
             validators.validate_password(password=attr['password'])

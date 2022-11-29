@@ -88,7 +88,7 @@ class ResetPasswordRequestEmailTestCase(APITestCase):
 
     def test_forgot_password_email_not_in_the_system(self):
         data = {'email': 'no@no.no'}
-        response = self.client.post(self.url,  data, format='json')
+        response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'There is no account with that email.')
 
@@ -121,15 +121,16 @@ class ResetPasswordSecurityCodeTestCase(APITestCase):
 
     def test_security_code_email_not_in_the_system(self):
         data = {'email': 'no@no.no', 'security_code': '000000'}
-        response = self.client.post(self.url,  data, format='json')
+        response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'There is no user with that email.')
 
     def test_security_code_wrong_code(self):
         data = {'email': self.user.email, 'security_code': '000000'}
-        response = self.client.post(self.url,  data, format='json')
+        response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'Incorrect security code. Check your secure code or request for a new one.')
+        self.assertEqual(response.data['error'],
+                         'Incorrect security code. Check your secure code or request for a new one.')
 
     def test_security_code_generate_token(self):
         data = {'email': self.user.email, 'security_code': self.user.security_code}
@@ -150,7 +151,7 @@ class CreateNewPasswordTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('v1.0:users:create-new-password')
-        self.user = User.objects.create_user(email='user@user.user')
+        self.user = User.objects.create_user(email='user@user.user', password='Vtam!ndpr123')
         self.token = str(InvitationToken.objects.filter(user=self.user).first())
 
     def test_create_new_password_add_email_field(self):
@@ -203,10 +204,12 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {'token': self.token, 'password': '12Jsir*', 'confirm_password': '12Jsir*'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['password'][0], "This password is too short. It must contain at least %d characters." % 8)
+        self.assertEqual(response.data['password'][0],
+                         "This password is too short. It must contain at least %d characters." % 8)
 
     def test_ensure_maximum_length_is_invalid(self):
-        data = {'token': self.token, 'password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6',
+        data = {'token': self.token,
+                'password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6',
                 'confirm_password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -232,13 +235,19 @@ class CreateNewPasswordTestCase(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], "The password must contain at least 1 special character: " +
-                "()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?")
+                         "()[]{}|\`~!@#$%^&*_-+=;:'\",<>./?")
 
     def test_ensure_password_include_no_digits(self):
         data = {'token': self.token, 'password': 'Yjduc&%jeu', 'confirm_password': 'Yjduc&%jeu'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], "The password must contain at least 1 digit, 0-9.")
+
+    def test_ensure_old_password_not_used_as_new(self):
+        data = {'token': self.token, 'password': 'Vtam!ndpr123', 'confirm_password': 'Vtam!ndpr123'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'][0], 'This password can not be used.')
 
 
 class UserGeneralInformationTestCase(APITestCase):
@@ -272,8 +281,9 @@ class UserGeneralInformationTestCase(APITestCase):
         self.assertEqual(response.data['last_name'][0], "This field may not be blank.")
 
     def test_ensure_first_name_above_100_symbols_fails(self):
-        data = {'first_name': 'MarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkMarkmark',
-                'last_name': 'Hamill'}
+        data = {
+            'first_name': 'MarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkMarkmark',
+            'last_name': 'Hamill'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['first_name'][0], "Ensure this field has no more than 100 characters.")
@@ -374,7 +384,6 @@ class UsersRoleListAPIViewTestCase(APITestCase):
                                                                    'password': 'strong'})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
-
     def test_list_of_users_by_role_supervisor(self):
         self.url = reverse('v1.0:users:users-role-list', args=['supervisor'])
         response = self.client.get(self.url)
@@ -461,7 +470,6 @@ class NewMemberAPIViewTestCase(APITestCase):
         self.assertEqual(Profile.objects.get(user__email=self.data['email']).role, ProfileRoles.COORDINATOR)
         self.assertEqual(Building.objects.filter(contact_person__email=self.data['email']).count(), 1)
 
-
     def test_create_new_member_permission_access_for_amity_admin_no_role_error(self):
         response = self.client.post(self.url, self.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -494,7 +502,8 @@ class ActivateAPIViewTestCase(APITestCase):
                                           first_name='Mark00', last_name='Hamill00',
                                           role=ProfileRoles.RESIDENT)
         client = APIClient()
-        res = client.post(reverse('v1.0:token_obtain_pair'), {'email': 'user010@user10.user10', 'password': 'M@rkHami100'})
+        res = client.post(reverse('v1.0:token_obtain_pair'),
+                          {'email': 'user010@user10.user10', 'password': 'M@rkHami100'})
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
 
         url = reverse('v1.0:users:activate-member', kwargs={'pk': user10.id})
