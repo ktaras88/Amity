@@ -151,7 +151,7 @@ class CreateNewPasswordTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('v1.0:users:create-new-password')
-        self.user = User.objects.create_user(email='user@user.user')
+        self.user = User.objects.create_user(email='user@user.user', password='Vtam!ndpr123')
         self.token = str(InvitationToken.objects.filter(user=self.user).first())
 
     def test_create_new_password_add_email_field(self):
@@ -208,9 +208,7 @@ class CreateNewPasswordTestCase(APITestCase):
                          "This password is too short. It must contain at least %d characters." % 8)
 
     def test_ensure_maximum_length_is_invalid(self):
-        data = {'token': self.token,
-                'password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6',
-                'confirm_password': '12Jsir*rvsdbhrthnngfnewrvsdcge1346tfsedfvtjFhmhgwsgsnrsegbgfnryyzetahdnzfmtusjehfnfjysruaengdngkdjahthfxthysykysjtdfbfdbfgtjhtrsjsrysmy6'}
+        data = {'token': self.token, 'password': '12Jsir*r' * 100, 'confirm_password': '12Jsir*r' * 100}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], "This password must contain at most %d characters." % 128)
@@ -242,6 +240,12 @@ class CreateNewPasswordTestCase(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['password'][0], "The password must contain at least 1 digit, 0-9.")
+
+    def test_ensure_old_password_not_used_as_new(self):
+        data = {'token': self.token, 'password': 'Vtam!ndpr123', 'confirm_password': 'Vtam!ndpr123'}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'][0], 'This password can not be used.')
 
 
 class UserProfileInformationTestCase(APITestCase):
@@ -275,17 +279,13 @@ class UserProfileInformationTestCase(APITestCase):
         self.assertEqual(response.data['last_name'][0], "This field may not be blank.")
 
     def test_ensure_first_name_above_100_symbols_fails(self):
-        data = {
-            'first_name': 'MarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkmarkMarkmark',
-            'last_name': 'Hamill'}
+        data = {'first_name': 'Mark' * 50, 'last_name': 'Hamill'}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['first_name'][0], "Ensure this field has no more than 100 characters.")
 
     def test_ensure_last_name_above_100_symbols_fails(self):
-        data = {
-            'first_name': 'Mark',
-            'last_name': 'Hamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamillhamill'}
+        data = {'first_name': 'Mark', 'last_name': 'Hamill' * 50}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['last_name'][0], "Ensure this field has no more than 100 characters.")
