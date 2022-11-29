@@ -1,20 +1,28 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Value
-from django.db.models.functions import Concat
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Value, Subquery, F
+from django.db.models.functions import Concat, Coalesce
 from django.utils.decorators import method_decorator
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleJWTTokenObtainPairView
 
-from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator
+from buildings.models import Building
+from communities.models import Community
+from .filters import CommunityMembersFilter
+
+from amity_api.permission import IsOwnerNotForResident, IsAmityAdministratorOrSupervisorOrCoordinator, \
+    IsAmityAdministratorOrSupervisor
 from .models import InvitationToken
 from .serializers import RequestEmailSerializer, SecurityCodeSerializer, TokenObtainPairSerializer, \
     CreateNewPasswordSerializer, UserAvatarSerializer, UserProfileInformationSerializer,\
-    UserPasswordInformationSerializer, MemberSerializer
+    UserPasswordInformationSerializer, MemberSerializer, MembersListSerializer
 from .mixins import PropertyMixin, RoleMixin, BelowRolesListMixin
 
 User = get_user_model()
@@ -157,13 +165,38 @@ class GetAuthenticatedUserIdAPIView(APIView):
         return Response({'user_id': request.user.id}, status=status.HTTP_200_OK)
 
 
+@method_decorator(name='get', decorator=swagger_auto_schema(
+    operation_summary="Get all the members in system"
+))
 @method_decorator(name='create', decorator=swagger_auto_schema(
     operation_summary="Create new member"
 ))
-class NewMemberAPIView(PropertyMixin, generics.CreateAPIView):
+class MembersAPIView(PropertyMixin, generics.ListCreateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsAmityAdministratorOrSupervisorOrCoordinator, )
     serializer_class = MemberSerializer
+
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = CommunityMembersFilter
+    filterset_fields = ['full_name']
+    ordering_fields = ['full_name']
+    ordering = ['-is_active', 'full_name']
+    search_fields = ['full_name']
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            query = User.objects.values('avatar', 'avatar_coord', 'email', 'phone_number').\
+                annotate(full_name=Concat('first_name', Value(' '), 'last_name'), role=F('profile__role'),
+                         communities_list=ArrayAgg('communities__name', distinct=True),
+                         buildings_list=ArrayAgg('buildings__name', distinct=True))
+            return query
+        else:
+            return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return MembersListSerializer
+        return MemberSerializer
 
     def perform_create(self, serializer):
         user = User.objects.create_user(**serializer.validated_data)
@@ -199,6 +232,18 @@ class ActivateSpecificMemberAPIView(APIView):
         return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class InactivateSpecificMemberAPIView(APIView):
+    permission_classes = (IsAmityAdministratorOrSupervisor,)
+
+    def put(self, request, *args, **kwargs):
+        if user := User.objects.filter(id=kwargs['pk']).first():
+            user.inactivate_user()
+            user.communities.update(contact_person=None)
+            user.buildings.update(contact_person=None)
+            return Response({'is_active': user.is_active}, status=status.HTTP_200_OK)
+        return Response({'error': 'There is no such user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @method_decorator(name='get', decorator=swagger_auto_schema(
     operation_summary="List of roles below the auth user's role"
 ))
@@ -208,3 +253,4 @@ class BelowRolesListAPIView(BelowRolesListMixin, APIView):
     def get(self, request, *args, **kwargs):
         roles_list = self.get_roles_list(request)
         return Response({'roles_list': roles_list}, status=status.HTTP_200_OK)
+
