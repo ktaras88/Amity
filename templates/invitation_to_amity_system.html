@@ -5,7 +5,7 @@
     <title>Invitation to Amity password creation</title>
 </head>
 <body>
-    <h2>Hello{% if first_name %}{{ first_name }}{% endif %}{% if last_name %}{{ last_name }}{% endif %}!</h2>
+    <h2>Hello{% if first_name %} {{ first_name }}{% endif %}{% if last_name %} {{ last_name }}{% endif %}!</h2>
     <p>This is <strong><a href="{{ link_url }}" target="_blank">invitation</a></strong> to the Amity system.</p>
     <p>Thanks for using Amity.</p>
 </body>
