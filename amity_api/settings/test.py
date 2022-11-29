@@ -1,8 +1,7 @@
+from .base import *
 from decouple import config
 
-from .base import *
-
-DEBUG = config('DEBUG', default=False)
+DEBUG = config('DEBUG', default=True)
 
 DATABASES = {
     'default': {
@@ -14,3 +13,5 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

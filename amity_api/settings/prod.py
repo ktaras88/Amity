@@ -14,7 +14,7 @@ DATABASES = {
         'USER': config('DB_USER_NAME', default=''),
         'PASSWORD': config('DB_PASSWORD', default=''),
         'HOST': config('DB_HOST', default='db'),
-        'PORT': '5432',
+        'PORT': config('DB_PORT', default=''),
     }
 }
 
@@ -26,3 +26,9 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     send_default_pii=True
 )
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
+AWS_QUERYSTRING_AUTH = False
