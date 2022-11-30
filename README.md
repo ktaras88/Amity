@@ -104,8 +104,8 @@ export DSN_KEY = your_key
 export EMAIL_HOST_USER = your_host_user
 export EMAIL_HOST_PASSWORD = your_email_for_host_user
 
-export FRONT_END_DOMAIN_URL = your_domain_url
-export FRONT_END_NEW_PASSWORD_PART = '/auth/create_new_password'
+export FRONT_END_DOMAIN_URL = 'https://qa-t2.amity.pp.ua'
+export FRONT_END_NEW_PASSWORD_PART = '/create-new-password'
 
 export AWS_ACCESS_KEY_ID = your_aws_access_key
 export AWS_SECRET_ACCESS_KEY = your_aws_secret_access_key
