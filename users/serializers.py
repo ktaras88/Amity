@@ -109,7 +109,7 @@ class CreateNewPasswordSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError({'error': "Invalid token."})
         if check_password(attr['password'], token.user.password):
-            raise serializers.ValidationError({'error': "This password can not be used."})
+            raise serializers.ValidationError({'error': "Old password can not be used."})
         try:
             validators.validate_password(password=attr['password'])
         except exceptions.ValidationError as e:
