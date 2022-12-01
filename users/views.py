@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Value, Subquery, F
-from django.db.models.functions import Concat, Coalesce
+from django.db.models import Value, F
+from django.db.models.functions import Concat
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema

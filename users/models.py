@@ -22,7 +22,7 @@ class InvitationToken(rest_framework.authtoken.models.Token):
 
 class User(AbstractBaseUser):
     def file_path(self, filename):
-        return 'media/avatars/' + str(self.id) + str(time.time())
+        return 'media/avatars/' + str(self.id) + "_" + str(time.time())
 
     first_name = models.CharField('first name', max_length=100, blank=False, null=False)
     last_name = models.CharField('last name', max_length=100, blank=False, null=False)

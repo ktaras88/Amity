@@ -245,7 +245,7 @@ class CreateNewPasswordTestCase(APITestCase):
         data = {'token': self.token, 'password': 'Vtam!ndpr123', 'confirm_password': 'Vtam!ndpr123'}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'][0], 'This password can not be used.')
+        self.assertEqual(response.data['error'][0], 'Old password can not be used.')
 
 
 class UserProfileInformationTestCase(APITestCase):
