@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'localflavor',
     'django_filters',
     'corsheaders',
+    'django_cleanup',
     'users',
     'communities',
     'buildings',

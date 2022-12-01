@@ -1,3 +1,5 @@
+import time
+
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -12,8 +14,8 @@ User = get_user_model()
 
 
 class Community(models.Model):
-    def file_path(instance, filename):
-        return 'media/communities/' + str(instance.id)
+    def file_path(self, filename):
+        return 'media/communities/' + str(self.id) + str(time.time())
 
     name = models.CharField('name', max_length=100)
     state = USStateField('state')
