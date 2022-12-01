@@ -5,7 +5,7 @@ orbs:
 
 # CircleCI needs variables:
 # AWS_DEFAULT_REGION, AWS_ECR_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
-# PROD_TARGET_GROUP, STAGING_TARGET_GROUP, QA_TARGET_GROUP
+# PRODUCTION_TARGET_GROUP, QA_TARGET_GROUP
 # PROJECT_NAME
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Set ENV
           command: |
-            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
               echo "export ENV=$CIRCLE_BRANCH" >> $BASH_ENV
             else
               echo "export ENV=temporary-storage" >> $BASH_ENV
@@ -37,41 +37,7 @@ jobs:
           repo: "${ENV}-${PROJECT_NAME}"
           region: AWS_DEFAULT_REGION
           tag: backend-<<pipeline.number>>-${CIRCLE_SHA1}
-
-
-  # #run_unit_tests:
-  #   parameters:
-  #     environment:
-  #       default: "temporary-storage"
-  #       type: string
-  #   machine:
-  #         image: ubuntu-2004:202111-02
-  #   steps:
-  #     - checkout
-  #     - aws-cli/install
-  #     - run:
-  #         name: Pull variables
-  #         command: |
-  #           apt update && apt install -y jq
-  #           if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
-  #             aws secretsmanager get-secret-value --secret-id "${CIRCLE_BRANCH}/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
-  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
-  #           else
-  #             aws secretsmanager get-secret-value --secret-id "qa/${PROJECT_NAME}/backend" --region $AWS_DEFAULT_REGION | jq -r '.SecretString' | \
-  #             jq -r "to_entries|map(\"\(.key)=\\\"\(.value|tostring)\\\"\")|.[]"| sed -e 's/"//' -e 's/"$//g' > deployment/unit-tests/.env
-  #           fi
-  #     - run:
-  #         name: Run unit tests
-  #         command: |
-  #           set -ex
-  #           export IMAGE_NAME='${AWS_ECR_ID}/<<parameters.environment>>-gbd-talent:backend-<<pipeline.number>>-${CIRCLE_SHA1}'
-  #           sed -i "s@IMAGE_NAME@${IMAGE_NAME}@" deploy/unit-tests/docker-compose.yml
-  #           cd deploy/unit-tests/
-  #           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ECR_ID
-  #           docker-compose up -d
-  #           docker exec -it backend bash -c 'set -ex && coverage run --source='.' -m pytest --junitxml=test-count.xml && coverage xml'
       
-
   check_main_branch:
     machine:
       image: ubuntu-2004:202111-02
@@ -85,7 +51,6 @@ jobs:
             else
               echo "This is main branch, it will be safed on AWS ECR"
             fi
-
 
   # AWS RDS
   run_database_migrations:
@@ -104,7 +69,7 @@ jobs:
               chmod +x migrations.sh
               bash migrations.sh
 
-  deploy_the_aplication:
+  deploy_the_application:
     machine:
         image: ubuntu-2004:202111-02
     steps:
@@ -114,7 +79,7 @@ jobs:
           name: Deploy
           no_output_timeout: 30m
           command: |
-            if [ "$CIRCLE_BRANCH" == "production" ] || [ "$CIRCLE_BRANCH" == "staging" ] || [ "$CIRCLE_BRANCH" == "qa" ]; then
+            if [ "$CIRCLE_BRANCH" == "production" ] ||[ "$CIRCLE_BRANCH" == "qa" ]; then
               sudo apt-get install moreutils
               export TARGET_GROUP_ARN=TARGET_GROUP_ARN_${CIRCLE_BRANCH^^}
               export TAG=<<pipeline.number>>-${CIRCLE_SHA1}
@@ -141,28 +106,6 @@ workflows:
   ci_cd:
     jobs:
       - build_docker_images
-
-      # - run_unit_tests:
-      #     requires:
-      #       - build_docker_images
-      #     filters:
-      #       branches:
-      #         ignore:
-      #           - production
-      #           - staging
-      #           - qa
-          
-      # - run_unit_tests:
-      #     name: run_unit_tests_main
-      #     environment: "${CIRCLE_BRANCH}"
-      #     requires:
-      #       - build_docker_images
-      #     filters:
-      #       branches:
-      #         only:
-      #           - qa
-      #           - staging
-      #           - production
       
       - check_main_branch:
           requires:
@@ -175,7 +118,6 @@ workflows:
             branches:
               only:
                 - qa
-                - staging
                 - production
 
       - deploy_the_aplication:
@@ -185,5 +127,4 @@ workflows:
             branches:
               only:
                 - qa
-                - staging
                 - production            
