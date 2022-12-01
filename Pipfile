@@ -21,6 +21,7 @@ django-storages = "==1.13.1"
 boto3 = "==1.24.95"
 django-filter = "==22.1"
 django-cors-headers = "*"
+django-cleanup = "*"
 
 [dev-packages]
 

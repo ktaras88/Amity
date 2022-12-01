@@ -1,4 +1,5 @@
 import random
+import time
 from string import digits
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.mail import send_mail
@@ -20,8 +21,8 @@ class InvitationToken(rest_framework.authtoken.models.Token):
 
 
 class User(AbstractBaseUser):
-    def file_path(instance, filename):
-        return 'media/avatars/' + str(instance.id)
+    def file_path(self, filename):
+        return 'media/avatars/' + str(self.id) + "_" + str(time.time())
 
     first_name = models.CharField('first name', max_length=100, blank=False, null=False)
     last_name = models.CharField('last name', max_length=100, blank=False, null=False)
