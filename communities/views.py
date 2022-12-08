@@ -106,8 +106,9 @@ class SupervisorDataAPIView(APIView):
     permission_classes = (IsAmityAdministratorOrSupervisor,)
 
     def get(self, request, *args, **kwargs):
-        supervisor_data = User.objects.values('email', 'phone_number'). \
-            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'))
+        supervisor_data = User.objects.values('email', 'phone_number').\
+            filter(profile__role=ProfileRoles.SUPERVISOR). \
+            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'), supervisor_id=F('id'))
 
         return Response({'supervisor_data': list(supervisor_data)})
 
