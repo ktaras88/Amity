@@ -62,11 +62,6 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
                 self.request.auth['role'] == ProfileRoles.SUPERVISOR else query.all()
         return self.default_queryset
 
-    def perform_create(self, serializer):
-        if 'supervisor_id' in self.request.POST:
-            serializer.validated_data['contact_person_id'] = self.request.POST['supervisor_id']
-        serializer.save(**serializer.validated_data)
-
 
 @method_decorator(name='put', decorator=swagger_auto_schema(
     operation_summary="Change community data"
@@ -113,7 +108,8 @@ class SupervisorDataAPIView(APIView):
     def get(self, request, *args, **kwargs):
         supervisor_data = User.objects.values('email', 'phone_number').\
             filter(profile__role=ProfileRoles.SUPERVISOR). \
-            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'), supervisor_id=F('id'))
+            annotate(supervisor_name=Concat('first_name', Value(' '), 'last_name'), supervisor_id=F('id')).\
+            order_by('supervisor_name')
 
         return Response({'supervisor_data': list(supervisor_data)})
 
