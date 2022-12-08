@@ -62,6 +62,11 @@ class CommunitiesViewSet(mixins.CreateModelMixin,
                 self.request.auth['role'] == ProfileRoles.SUPERVISOR else query.all()
         return self.default_queryset
 
+    def perform_create(self, serializer):
+        if 'supervisor_id' in self.request.POST:
+            serializer.validated_data['contact_person_id'] = self.request.POST['supervisor_id']
+        serializer.save(**serializer.validated_data)
+
 
 @method_decorator(name='put', decorator=swagger_auto_schema(
     operation_summary="Change community data"
